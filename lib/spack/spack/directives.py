@@ -80,7 +80,7 @@ class directive(object):
 
     Spack directives allow you to modify a package while it is being
     defined, e.g. to add version or depenency information.  Directives
-    are one of the key pieces of Spack's package "langauge", which is
+    are one of the key pieces of Spack's package "language", which is
     embedded in python.
 
     Here's an example directive:
