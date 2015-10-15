@@ -14,11 +14,16 @@ class Netcdf(Package):
 	# >HDF5
     depends_on("hdf5")
 
-    def install(self, spec, prefix):    
+    def install(self, spec, prefix):
+        env['CXX'] = spec['mpi'].prefix.bin + "/mpic++"
+        env['CC'] = spec['mpi'].prefix.bin + "/mpicc"
+
         configure(
 		"--prefix=%s" % prefix, 
 		"--disable-dap", # Disable DAP.
-		"--disable-shared", # Don't build shared libraries (use static libs).
+        '--with-pic',
+        # FIXME : this should be shared for trilinos to work
+		#"--disable-shared", # Don't build shared libraries (use static libs).
 		"CPPFLAGS=-I%s/include" % spec['hdf5'].prefix, # Link HDF5's include dir.
 		"LDFLAGS=-L%s/lib" % spec['hdf5'].prefix) # Link HDF5's lib dir.
 		
