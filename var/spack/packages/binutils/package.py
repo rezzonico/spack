@@ -25,8 +25,6 @@ class Binutils(Package):
         if spec.satisfies('@2.24'):
             configure_args.append('--disable-werror')
 
-        configure(*options)
-
         if '+libiberty' in spec:
             configure_args.append('--enable-install-libiberty')
 
