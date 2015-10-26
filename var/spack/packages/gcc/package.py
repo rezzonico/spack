@@ -53,6 +53,8 @@ class Gcc(Package):
     depends_on("mpfr")
     depends_on("gmp")
     depends_on("mpc")     # when @4.5:
+    depends_on("libelf")
+    depends_on("binutils~libiberty")
     depends_on("libelf", when='+libelf')
     depends_on("binutils",when="+binutils")
 
