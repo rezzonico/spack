@@ -36,6 +36,8 @@ class Gcc(Package):
     list_url = 'http://open-source-box.org/gcc/'
     list_depth = 2
 
+    DEPENDS_ON_ISL_PREDICATE = '@5.0:'
+
     version('5.2.0', 'a51bcfeb3da7dd4c623e27207ed43467')
     version('4.9.3', '6f831b4d251872736e8e9cc09746f327')
     version('4.9.2', '4df8ee253b7f3863ad0b86359cd39c43')
@@ -46,20 +48,13 @@ class Gcc(Package):
     version('4.6.4', 'b407a3d1480c11667f293bfb1f17d1a4')
     version('4.5.4', '27e459c2566b8209ab064570e1b378f7')
     
-    variant('binutils', default=False, description='Add a dependency on binutils')
-    variant('libelf', default=False, description='Add a dependency on libelf')
-    variant('isl', default=True, description='Add a dependency on isl')
-
     depends_on("mpfr")
     depends_on("gmp")
     depends_on("mpc")     # when @4.5:
-    depends_on("libelf")
     depends_on("binutils~libiberty")
-    depends_on("libelf", when='+libelf')
-    depends_on("binutils",when="+binutils")
 
     # Save these until we can do optional deps.
-    depends_on("isl", when='@5.0:+isl')
+    depends_on("isl", when=DEPENDS_ON_ISL_PREDICATE)
     #depends_on("ppl")
     #depends_on("cloog")
 
@@ -83,21 +78,14 @@ class Gcc(Package):
                    "--with-gnu-ld",
                    "--with-gnu-as",
                    "--with-quad"]
-        # Libelf
-        if '+libelf' in spec:
-            libelf_options = ["--with-libelf=%s" % spec['libelf'].prefix]
-            options.extend(libelf_options)
-
         # Binutils
-        if '+binutils' in spec:
-            binutils_options = ["--with-stage1-ldflags=%s" % self.rpath_args,
-                                "--with-boot-ldflags=%s"   % self.rpath_args,
-                                "--with-ld=%s/bin/ld" % spec['binutils'].prefix,
-                                "--with-as=%s/bin/as" % spec['binutils'].prefix]
-            options.extend(binutils_options)
-            
+        binutils_options = ["--with-stage1-ldflags=%s" % self.rpath_args,
+                            "--with-boot-ldflags=%s"   % self.rpath_args,
+                            "--with-ld=%s/bin/ld" % spec['binutils'].prefix,
+                            "--with-as=%s/bin/as" % spec['binutils'].prefix]
+        options.extend(binutils_options)
         # Isl
-        if spec.satisfies('@5.0:+isl'):
+        if spec.satisfies(Gcc.DEPENDS_ON_ISL_PREDICATE):
             isl_options = ["--with-isl=%s" % spec['isl'].prefix]
             options.extend(isl_options)
 
