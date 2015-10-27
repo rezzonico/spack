@@ -53,16 +53,14 @@ class Mpich(Package):
 
     def install(self, spec, prefix):
         config_args = ["--prefix=" + prefix,
-                       "--enable-shared"]
+                       "--enable-shared",
+                       "--enable-threads=multiple"]
 
         # TODO: Spack should make it so that you can't actually find
         # these compilers if they're "disabled" for the current
         # compiler configuration.
-        if not self.compiler.f77:
-            config_args.append("--disable-f77")
-
-        if not self.compiler.fc:
-            config_args.append("--disable-fc")
+        if not self.compiler.f77 and not self.compiler.fc:
+            config_args.append("--enable-fortran=none")
 
         configure(*config_args)
         make()
