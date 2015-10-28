@@ -40,6 +40,8 @@ class Llvm(Package):
     version('3.5.1', '2d3d8004f38852aa679e5945b8ce0b14', url='http://llvm.org/releases/3.5.1/llvm-3.5.1.src.tar.xz')
 
     depends_on('python@2.7:')
+    # TODO : if modules will start to load dependent packages, cmake should be marked as build dependency only
+    depends_on('cmake')
 
     def install(self, spec, prefix):
         env['CXXFLAGS'] = self.compiler.cxx11_flag
