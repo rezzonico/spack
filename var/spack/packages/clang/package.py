@@ -34,6 +34,8 @@ class Clang(Package):
     depends_on('llvm@3.7.0', when='@3.7.0')
     depends_on('llvm@3.6.2', when='@3.6.2')
     depends_on('llvm@3.5.1', when='@3.5.1')
+    # TODO : if modules will start to load dependent packages, cmake should be marked as build dependency only
+    depends_on('cmake')
 
     version('3.7.0', '8f9d27335e7331cf0a4711e952f21f01', url='http://llvm.org/releases/3.7.0/cfe-3.7.0.src.tar.xz')
     version('3.6.2', 'ff862793682f714bb7862325b9c06e20', url='http://llvm.org/releases/3.6.2/cfe-3.6.2.src.tar.xz')
