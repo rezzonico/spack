@@ -570,9 +570,12 @@ class Package(object):
     @property
     def installed_dependents(self):
         """Return a list of the specs of all installed packages that depend
-           on this one."""
+           on this one.
+
+        TODO: move this method to database.py?
+        """
         dependents = []
-        for spec in spack.db.installed_package_specs():
+        for spec in spack.installed_db.query():
             if self.name == spec.name:
                 continue
             for dep in spec.traverse():
@@ -608,6 +611,7 @@ class Package(object):
     def remove_prefix(self):
         """Removes the prefix for a package along with any empty parent directories."""
         spack.install_layout.remove_install_directory(self.spec)
+        spack.installed_db.remove(self.spec)
 
 
     def do_fetch(self):
@@ -786,6 +790,7 @@ class Package(object):
                          "Manually remove this directory to fix:",
                          self.prefix)
 
+
         def real_work():
             try:
                 tty.msg("Building %s." % self.name)
@@ -845,6 +850,10 @@ class Package(object):
         # Do the build.
         spack.build_environment.fork(self, real_work)
 
+        # note: PARENT of the build process adds the new package to
+        # the database, so that we don't need to re-read from file.
+        spack.installed_db.add(self.spec, self.prefix)
+
         # Once everything else is done, run post install hooks
         spack.hooks.post_install(self)
 
@@ -861,6 +870,14 @@ class Package(object):
         # Pass along paths of dependencies here
         for dep in self.spec.dependencies.values():
             dep.package.do_install(**kwargs)
+
+
+    @property
+    def build_log_path(self):
+        if self.installed:
+            return spack.install_layout.build_log_path(self.spec)
+        else:
+            return join_path(self.stage.source_path, 'spack-build.out')   
 
 
     @property
