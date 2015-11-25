@@ -76,7 +76,7 @@ class Package(object):
 
     Package is where the bulk of the work of installing packages is done.
 
-    A package defines how to fetch, verfiy (via, e.g., md5), build, and
+    A package defines how to fetch, verify (via, e.g., md5), build, and
     install a piece of software.  A Package also defines what other
     packages it depends on, so that dependencies can be installed along
     with the package itself.  Packages are written in pure python.
@@ -254,7 +254,7 @@ class Package(object):
            parallel = False
            ...
 
-    This changes thd default behavior so that make is sequential.  If you still
+    This changes the default behavior so that make is sequential.  If you still
     want to build some parts in parallel, you can do this in your install function:
 
     .. code-block:: python
@@ -614,7 +614,7 @@ class Package(object):
 
 
     def do_fetch(self):
-        """Creates a stage directory and downloads the taball for this package.
+        """Creates a stage directory and downloads the tarball for this package.
            Working directory will be set to the stage directory.
         """
         if not self.spec.concrete:
@@ -905,7 +905,7 @@ class Package(object):
 
         2. Extensions often need to invoke the 'python' interpreter
            from the Python installation being extended.  This routine can
-           put a 'python' Execuable object in the module scope for the
+           put a 'python' Executable object in the module scope for the
            extension package to simplify extension installs.
 
         3. A lot of Qt extensions need QTDIR set.  This can be used to do that.
@@ -961,7 +961,7 @@ class Package(object):
 
 
     def do_activate(self, force=False):
-        """Called on an etension to invoke the extendee's activate method.
+        """Called on an extension to invoke the extendee's activate method.
 
         Commands should call this routine, and should not call
         activate() directly.
