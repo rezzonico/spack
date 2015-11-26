@@ -43,6 +43,11 @@ class Boost(Package):
     version('1.34.1', '2d938467e8a448a2c9763e0a9f8ca7e5')
     version('1.34.0', 'ed5b9291ffad776f8757a916e1726ad0')
 
+    variant('python', default=False, description='Activate the component Boost.Python')
+    variant('mpi', default=False, description='Activate the component Boost.MPI')
+
+    depends_on('mpi', when='+mpi')
+    depends_on('python', when='+python')
 
     def url_for_version(self, version):
         """Handle Boost's weird URLs, which write the version two different ways."""
@@ -52,15 +57,66 @@ class Boost(Package):
         return "http://downloads.sourceforge.net/project/boost/boost/%s/boost_%s.tar.bz2" % (
             dots, underscores)
 
+    def determine_toolset(self):
+        toolsets = {'gcc': 'gcc',
+                    'icpc': 'intel',
+                    'clang++': 'clang'}
+
+        for cc, toolset in toolsets.iteritems():
+            if(cc in self.compiler.cxx_names):
+                return toolset
+
+        # fallback to gcc if no toolset found
+        return 'gcc'
+
+    def determine_bootstrap_options(self, spec, options):
+        options.append('--with-toolset=%s' % self.determine_toolset())
+
+        without_libs = []
+        if '~mpi' in spec:
+            without_libs.append('mpi')
+        if '~python' in spec:
+            without_libs.append('python')
+        else:
+            options.append('--with-python=%s' % (spec['python'].prefix.bin + '/python'))
+
+        if without_libs:
+            options.append('--without-libraries=%s' % ','.join(without_libs))
+
+        with open('user-config.jam', 'w') as f:
+            if '+mpi' in spec:
+                f.write('using mpi : %s ;' % (spec['mpi'].prefix.bin + '/mpic++'))
+            if '+python' in spec:
+                f.write('using python : %s : %s ;' % (spec['python'].version,
+                                                      (spec['python'].prefix.bin + '/python')))
+
+    def determine_b2_options(self, spec, options):
+        if '+debug' in spec:
+            options.append('variant=debug')
+        else:
+            options.append('variant=release')
+
+#        options.append('toolset=%s' % self.determine_toolset())
+        options.append('link=static,shared')
+        options.append('--layout=tagged')
+	options.append('threading=single,multi')
 
     def install(self, spec, prefix):
+        env['BOOST_BUILD_PATH'] = './'
+
         bootstrap = Executable('./bootstrap.sh')
-        bootstrap()
+
+        bootstrap_options = ['--prefix=%s' % prefix]
+        self.determine_bootstrap_options(spec, bootstrap_options)
+
+        bootstrap(*bootstrap_options)
 
         # b2 used to be called bjam, before 1.47 (sigh)
         b2name = './b2' if spec.satisfies('@1.47:') else './bjam'
 
         b2 = Executable(b2name)
-        b2('install',
-           '-j %s' % make_jobs,
-           '--prefix=%s' % prefix)
+        b2_options = ['-j %s' % make_jobs]
+
+        self.determine_b2_options(spec, b2_options)
+
+        b2('install', *b2_options)
