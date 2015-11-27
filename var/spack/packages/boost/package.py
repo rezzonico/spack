@@ -45,10 +45,13 @@ class Boost(Package):
 
     variant('python', default=False, description='Activate the component Boost.Python')
     variant('mpi', default=False, description='Activate the component Boost.MPI')
+    variant('compression', default=True, description='Activate the compression Boost.iostreams')
 
     depends_on('mpi', when='+mpi')
     depends_on('python', when='+python')
-
+    depends_on('zlib', when='+compression')
+    depends_on('bzip2', when='+compression')
+    
     def url_for_version(self, version):
         """Handle Boost's weird URLs, which write the version two different ways."""
         parts = [str(p) for p in Version(version)]
@@ -96,12 +99,24 @@ class Boost(Package):
         else:
             options.append('variant=release')
 
-#        options.append('toolset=%s' % self.determine_toolset())
-        options.append('link=static,shared')
-        options.append('--layout=tagged')
-	options.append('threading=single,multi')
+        if '~compression' in spec:
+            options.extend(['-s NO_BZIP2=1',
+                            '-s NO_ZLIB=1',
+            ])
+
+        if '+compression' in spec:
+            options.extend(['-s BZIP2_INCLUDE=%s' % spec['bzip2'].prefix.include,
+                            '-s BZIP2_LIBPATH=%s' % spec['bzip2'].prefix.lib,
+                            '-s ZLIB_INCLUDE=%s' % spec['zlib'].prefix.include,
+                            '-s ZLIB_LIBPATH=%s' % spec['blib'].prefix.lib])
+
+        options.extend(['toolset=%s' % self.determine_toolset(),
+                       'link=static,shared',
+                       'threading=single,multi',
+                       '--layout=tagged'])
 
     def install(self, spec, prefix):
+        # to make him find the user-config.jam
         env['BOOST_BUILD_PATH'] = './'
 
         bootstrap = Executable('./bootstrap.sh')
