@@ -88,9 +88,9 @@ class Boost(Package):
 
         with open('user-config.jam', 'w') as f:
             if '+mpi' in spec:
-                f.write('using mpi : %s ;' % (spec['mpi'].prefix.bin + '/mpic++'))
+                f.write('using mpi : %s ;\n' % (spec['mpi'].prefix.bin + '/mpicxx'))
             if '+python' in spec:
-                f.write('using python : %s : %s ;' % (spec['python'].version,
+                f.write('using python : %s : %s ;\n' % (spec['python'].version,
                                                       (spec['python'].prefix.bin + '/python')))
 
     def determine_b2_options(self, spec, options):
@@ -108,11 +108,10 @@ class Boost(Package):
             options.extend(['-s BZIP2_INCLUDE=%s' % spec['bzip2'].prefix.include,
                             '-s BZIP2_LIBPATH=%s' % spec['bzip2'].prefix.lib,
                             '-s ZLIB_INCLUDE=%s' % spec['zlib'].prefix.include,
-                            '-s ZLIB_LIBPATH=%s' % spec['blib'].prefix.lib])
+                            '-s ZLIB_LIBPATH=%s' % spec['zlib'].prefix.lib])
 
         options.extend(['toolset=%s' % self.determine_toolset(),
                        'link=static,shared',
-                       'threading=single,multi',
                        '--layout=tagged'])
 
     def install(self, spec, prefix):
@@ -134,4 +133,5 @@ class Boost(Package):
 
         self.determine_b2_options(spec, b2_options)
 
-        b2('install', *b2_options)
+        b2('install', 'threading=single', *b2_options)
+        b2('install', 'threading=multi', *b2_options)
