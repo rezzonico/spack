@@ -40,7 +40,7 @@ STAGE_PREFIX = 'spack-stage-'
 
 
 class Stage(object):
-    """A Stage object manaages a directory where some source code is
+    """A Stage object manages a directory where some source code is
        downloaded and built before being installed.  It handles
        fetching the source code, either as an archive to be expanded
        or by checking it out of a repository.  A stage's lifecycle
