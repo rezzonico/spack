@@ -20,7 +20,8 @@ class Binutils(Package):
             '--enable-multilib',
             '--enable-shared',
             '--enable-64-bit-bfd',
-            '--enable-targets=all']
+            '--enable-targets=all',
+            '--with-sysroot=/']
 
         if spec.satisfies('@2.24'):
             configure_args.append('--disable-werror')
