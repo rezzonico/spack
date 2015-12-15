@@ -19,3 +19,14 @@ class Openblas(Package):
         with working_dir(prefix.lib):
             symlink('libopenblas.a', 'blas.a')
             symlink('libopenblas.a', 'libblas.a')
+
+    def setup_dependent_environment(self, module, spec, dependent_spec):
+        spec['blas'].fc_link = '-L%s -lopenblas' % spec['blas'].prefix.lib
+        spec['blas'].cc_link = spec['blas'].fc_link
+        spec['blas'].libraries = [ join_path(spec['blas'].prefix.lib, 'libopenblas.a') ]
+       
+        os.environ['BLA_VENDOR'] = 'Generic'
+
+        spec['lapack'].fc_link = '-L%s -llapack' % spec['lapack'].prefix.lib
+        spec['lapack'].cc_link = spec['lapack'].cc_link
+        spec['lapack'].libraries = [ join_path(spec['lapack'].prefix.lib, 'liblapack.a') ]

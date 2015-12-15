@@ -25,35 +25,31 @@ class NetlibLapack(Package):
 
     # blas is a virtual dependency.
     depends_on('blas')
-
+    
     depends_on('cmake')
 
     # Doesn't always build correctly in parallel
     parallel = False
 
-    @when('^netlib-blas')
-    def get_blas_libs(self):
-        blas = self.spec['netlib-blas']
-        return [join_path(blas.prefix.lib, 'blas.a')]
-
-
-    @when('^atlas')
-    def get_blas_libs(self):
-        blas = self.spec['atlas']
-        return [join_path(blas.prefix.lib, l)
-                for l in ('libf77blas.a', 'libatlas.a')]
-
-
     def install(self, spec, prefix):
-        blas_libs = ";".join(self.get_blas_libs())
-        cmake_args = [".", '-DBLAS_LIBRARIES=' + blas_libs]
+        cmake_args = [".", '-DUSE_OPTIMIZED_BLAS:BOOL=ON']
 
         if '+shared' in spec:
             cmake_args.append('-DBUILD_SHARED_LIBS=ON')
 
         cmake_args += std_cmake_args
 
-        cmake(*cmake_args)
-        make()
-        make("install")
+        with working_dir('spack-build', create=True):
+            cmake(*cmake_args)
+            make()
+            make("install")
 
+    def setup_dependent_environment(self, module, spec, dependent_spec):
+        spec['lapack'].fc_link = '-L%s -llapack' % spec['lapack'].prefix.lib
+        spec['lapack'].cc_link = spec['lapack'].fc_link
+        if '+shared' in spec['lapack']:
+            lib = 'liblapack.so'
+        else:
+            lib = 'liblapack.a'
+
+        spec['lapack'].libraries = [ join_path(spec['lapack'].prefix.lib, lib) ]

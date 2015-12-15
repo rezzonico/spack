@@ -1,0 +1,39 @@
+--- a/BLAS/TESTING/CMakeLists.txt	2015-12-15 20:04:14.259274977 +0100
++++ b/BLAS/TESTING/CMakeLists.txt	2015-12-15 20:03:39.720053240 +0100
+@@ -30,17 +30,16 @@
+   get_filename_component(baseNAME ${src} NAME_WE)
+   set(TEST_INPUT "${LAPACK_SOURCE_DIR}/BLAS/${baseNAME}.in")
+   add_executable(${name} ${src})
+-  get_target_property(TEST_LOC ${name} LOCATION)
+   target_link_libraries(${name} blas)
+   if(EXISTS "${TEST_INPUT}")
+     add_test(BLAS-${name} "${CMAKE_COMMAND}"
+-      -DTEST=${TEST_LOC}
++      -DTEST=$<TARGET_FILE:TEST_LOC>
+       -DINPUT=${TEST_INPUT}
+       -DINTDIR=${CMAKE_CFG_INTDIR}
+       -P "${LAPACK_SOURCE_DIR}/TESTING/runtest.cmake")
+     else()
+-      add_test(BLAS-${name} "${CMAKE_COMMAND}" 
+-        -DTEST=${TEST_LOC}
++      add_test(BLAS-${name} "${CMAKE_COMMAND}"
++	-DTEST=$<TARGET_FILE:TEST_LOC>
+         -DINTDIR=${CMAKE_CFG_INTDIR}
+         -P "${LAPACK_SOURCE_DIR}/TESTING/runtest.cmake")
+     endif()
+--- a/TESTING/CMakeLists.txt	2012-04-05 07:47:38.000000000 +0200
++++ b/TESTING/CMakeLists.txt	2015-12-15 20:18:26.700071748 +0100
+@@ -10,12 +10,11 @@
+ macro(add_lapack_test output input target)
+   set(TEST_INPUT "${LAPACK_SOURCE_DIR}/TESTING/${input}")
+   set(TEST_OUTPUT "${LAPACK_BINARY_DIR}/TESTING/${output}")
+-  get_target_property(TEST_LOC ${target} LOCATION)
+   string(REPLACE "." "_" input_name ${input})
+   set(testName "${target}_${input_name}")
+   if(EXISTS "${TEST_INPUT}")
+     add_test(LAPACK-${testName} "${CMAKE_COMMAND}"
+-      -DTEST=${TEST_LOC}
++      -DTEST=$<TARGET_LOC:TEST_LOC>
+       -DINPUT=${TEST_INPUT} 
+       -DOUTPUT=${TEST_OUTPUT} 
+       -DINTDIR=${CMAKE_CFG_INTDIR}

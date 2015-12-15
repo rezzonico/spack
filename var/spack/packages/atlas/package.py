@@ -21,7 +21,7 @@ class Atlas(Package):
     # TODO: make this provide BLAS once it works better.  Create a way
     # TODO: to mark "beta" packages and require explicit invocation.
 
-    # provides('blas')
+    provides('blas')
 
 
     def patch(self):
@@ -58,3 +58,18 @@ class Atlas(Package):
             make('ptcheck')
             make('time')
             make("install")
+
+    def setup_dependent_environment(self, module, spec, dependent_spec):
+        if '+shared' in spec['blas']:
+            libs = ['satlas']
+            lib_suffix = '.so'
+        else:
+            libs = ['f77blas', 'atlas']
+            lib_suffix = '.a'
+            
+        spec['blas'].fc_link = '-L%s %s' % (spec['blas'].prefix.lib, ' -l'.join(libs))
+        spec['blas'].cc_link = spec['blas'].fc_link
+        spec['blas'].libraries = [join_path(spec['blas'].prefix.lib,
+                                            'lib%s%s' % (l, lib_suffix)) for l in libs]
+                
+        os.environ['BLA_VENDOR'] = 'ATLAS'
