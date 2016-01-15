@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2013-2015, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory.
 #
 # This file is part of Spack.
@@ -24,27 +24,35 @@
 ##############################################################################
 from spack import *
 
-class Cmake(Package):
-    """A cross-platform, open-source build system. CMake is a family of
-       tools designed to build, test and package software."""
-    homepage  = 'https://www.cmake.org'
 
-    version('2.8.10.2', '097278785da7182ec0aea8769d06860c',
-            url = 'http://www.cmake.org/files/v2.8/cmake-2.8.10.2.tar.gz')
- 
-    version('3.0.2', 'db4c687a31444a929d2fdc36c4dfb95f',
-            url = 'http://www.cmake.org/files/v3.0/cmake-3.0.2.tar.gz')
- 
-    version('3.4.0', 'cd3034e0a44256a0917e254167217fc8',
-            url = 'https://cmake.org/files/v3.4/cmake-3.4.0.tar.gz')
+class Fltk(Package):
+    """
+    FLTK (pronounced "fulltick") is a cross-platform C++ GUI toolkit for UNIX/Linux (X11), Microsoft Windows, and
+    MacOS X. FLTK provides modern GUI functionality without the bloat and supports 3D graphics via OpenGL and its
+    built-in GLUT emulation.
 
-    variant('ncurses', default=True, description='Enables the build of the ncurses gui')
+    FLTK is designed to be small and modular enough to be statically linked, but works fine as a shared library. FLTK
+    also includes an excellent UI builder called FLUID that can be used to create applications in minutes.
+    """
+    homepage = 'http://www.fltk.org/'
+    url = 'http://fltk.org/pub/fltk/1.3.3/fltk-1.3.3-source.tar.gz'
 
-    depends_on('ncurses', when='+ncurses')
+    version('1.3.3', '9ccdb0d19dc104b87179bd9fd10822e3')
+
+    patch('font.patch', when='@1.3.3')
+
+    variant('shared', default=True, description='Enables the build of shared libraries')
 
     def install(self, spec, prefix):
-        configure('--prefix='   + prefix,
-                  '--parallel=' + str(make_jobs),
-                  '--', '-DCMAKE_USE_OPENSSL=ON')
+        options = ['--prefix=%s' % prefix,
+                   '--enable-localjpeg',
+                   '--enable-localpng',
+                   '--enable-localzlib']
+
+        if '+shared' in spec:
+            options.append('--enable-shared')
+
+        # FLTK needs to be built in-source
+        configure(*options)
         make()
         make('install')
