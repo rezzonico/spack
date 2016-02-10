@@ -35,6 +35,7 @@ class Intelmpi(Package):
         os.environ['I_MPI_ROOT'] = '/ssoft/intelmpi/5.1.1/RH6/all/x86_E5v2/impi/5.1.1.109'
         os.environ['I_MPI_PMI_LIBRARY'] = '/usr/lib64/libpmi.so'
         os.environ['I_MPI_FABRICS'] = 'shm:tmi'
-        os.environ['IPATH_NO_CPUAFFINITY'] = 1
+        os.environ['IPATH_NO_CPUAFFINITY'] = '1'
 
+        os.environ['LD_LIBRARY_PATH'] = '/ssoft/intel/15.0.0/RH6/all/x86_E5v2/composer_xe_2015.2.164/ipp/lib/intel64:/ssoft/intel/15.0.0/RH6/all/x86_E5v2/composer_xe_2015.2.164/tbb/lib/intel64/gcc4.4:/ssoft/intel/15.0.0/RH6/all/x86_E5v2/composer_xe_2015.2.164/mkl/lib/intel64:/ssoft/intel/15.0.0/RH6/all/x86_E5v2/composer_xe_2015.2.164/compiler/lib/intel64:/ssoft/intelmpi/5.1.1/RH6/all/x86_E5v2/impi/5.1.1.109/lib64/'
         #module.mpicc = join_path(self.prefix.bin, 'mpicc')

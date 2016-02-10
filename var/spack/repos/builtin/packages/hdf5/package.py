@@ -100,10 +100,10 @@ class Hdf5(Package):
             ])
 
             if '+cxx' in spec:
-                extra_args.append("CXX=%s" % spec['mpi'].prefix.bin + "/mpic++")
+                extra_args.append("CXX=%s" % spec['mpi'].prefix.bin + "/mpicxx")
 
             if '+fortran' in spec:
-                extra_args.append("FC=%s" % spec['mpi'].prefix.bin + "/mpifort")
+                extra_args.append("FC=%s" % spec['mpi'].prefix.bin + "/mpifc")
 
         if '+threadsafe' in spec:
             extra_args.extend([
