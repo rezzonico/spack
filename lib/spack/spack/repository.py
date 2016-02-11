@@ -233,6 +233,11 @@ class RepoPath(object):
         return providers
 
 
+    @_autospec
+    def extensions_for(self, extendee_spec):
+        return [p for p in self.all_packages() if p.extends(extendee_spec)]
+
+
     def find_module(self, fullname, path=None):
         """Implements precedence for overlaid namespaces.
 
@@ -295,8 +300,11 @@ class RepoPath(object):
         for repo in self.repos:
             if spec.name in repo:
                 return repo
-        else:
-            raise UnknownPackageError(spec.name)
+
+        # If the package isn't in any repo, return the one with
+        # highest precedence.  This is for commands like `spack edit`
+        # that can operate on packages that don't exist yet.
+        return self.first_repo()
 
 
     @_autospec
