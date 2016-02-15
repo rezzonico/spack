@@ -1,10 +1,11 @@
 import os
 import llnl.util.tty as tty
 
+from spack.provider_contracts import MpiProviderContract
 from spack import *
 
 
-class Intelmpi(Package):
+class Intelmpi(MpiProviderContract, Package):
     """
     Intel (R) MPI Library 5.1 focuses on making applications perform better on Intel (R) architecture based
     clusters implementing the high performance Message Passing Interface Version 3.0 specification on multiple fabrics.
@@ -36,3 +37,19 @@ class Intelmpi(Package):
         os.environ['I_MPI_PMI_LIBRARY'] = '/usr/lib64/libpmi.so'
         os.environ['I_MPI_FABRICS'] = 'shm:tmi'
         os.environ['IPATH_NO_CPUAFFINITY'] = '1'
+
+    @property
+    def cc_compiler_wrapper(self):
+        return join_path(self.prefix.bin, 'mpiicc')
+
+    @property
+    def cxx_compiler_wrapper(self):
+        return join_path(self.prefix.bin, 'mpicpc')
+
+    @property
+    def f77_compiler_wrapper(self):
+        return join_path(self.prefix.bin, 'mpiifort')
+
+    @property
+    def fc_compiler_wrapper(self):
+        return join_path(self.prefix.bin, 'mpiifort')
