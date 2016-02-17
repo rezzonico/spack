@@ -17,11 +17,9 @@ class R(Package):
     version('3.1.3', '53a85b884925aa6b5811dfc361d73fc4')
     version('3.1.2', '3af29ec06704cbd08d4ba8d69250ae74')
 
-    variant('external-lapack', default=False, description='Links to externally installed BLAS/LAPACK')
-
     # Virtual dependencies
-    depends_on('blas', when='+external-lapack')
-    depends_on('lapack', when='+external-lapack')
+    depends_on('blas')
+    depends_on('lapack')
 
     # Concrete dependencies
     depends_on('readline')
@@ -40,9 +38,8 @@ class R(Package):
     def install(self, spec, prefix):
         options = ['--prefix=%s' % prefix,
                    '--enable-R-shlib',
-                   '--enable-BLAS-shlib']
-        if '+external-lapack' in spec:
-            options.extend(['--with-blas', '--with-lapack'])
+                   '--with-blas=%s' % spec['blas'].package.blas_ld_flags,
+                   '--with-lapack=%s' % spec['lapack'].package.lapack_ld_flags]
 
         configure(*options)
         make()

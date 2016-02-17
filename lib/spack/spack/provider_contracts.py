@@ -28,6 +28,7 @@ Collects all the explicit contracts enforced on providers
 import abc
 from llnl.util.filesystem import join_path
 
+
 class MpiProviderContract(object):
     """
     ABC that defines a common interface for MPI providers
@@ -55,6 +56,7 @@ class StandardMpiProvider(MpiProviderContract):
     """
     Standard values that fit the most common FOSS implementations
     """
+
     @property
     def cc_compiler_wrapper(self):
         return join_path(self.prefix.bin, 'mpicc')
@@ -70,3 +72,28 @@ class StandardMpiProvider(MpiProviderContract):
     @property
     def fc_compiler_wrapper(self):
         return join_path(self.prefix.bin, 'mpifort')
+
+
+class BlasProviderContract(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def blas_ld_flags(self):
+        pass
+
+    @abc.abstractproperty
+    def blas_include_flags(self):
+        pass
+
+
+class LapackProviderContract(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def lapack_ld_flags(self):
+        pass
+
+    @abc.abstractproperty
+    def lapack_include_flags(self):
+        pass
+

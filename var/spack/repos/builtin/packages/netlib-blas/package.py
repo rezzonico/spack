@@ -1,8 +1,10 @@
-from spack import *
 import os
 
+from spack.provider_contracts import BlasProviderContract
+from spack import *
 
-class NetlibBlas(Package):
+
+class NetlibBlas(BlasProviderContract, Package):
     """Netlib reference BLAS"""
     homepage = "http://www.netlib.org/lapack/"
     url      = "http://www.netlib.org/lapack/lapack-3.5.0.tgz"
@@ -44,3 +46,14 @@ class NetlibBlas(Package):
         with working_dir(prefix.lib):
             symlink('librefblas.a', 'blas.a')
             symlink('librefblas.a', 'libblas.a')
+
+    @property
+    def blas_include_flags(self):
+        include_path = self.prefix.include
+        return '-I%s' % include_path
+
+    @property
+    def blas_ld_flags(self):
+        library_path = self.prefix.lib
+        return '-L%s -lblas' % library_path
+

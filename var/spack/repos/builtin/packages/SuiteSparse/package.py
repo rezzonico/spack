@@ -21,7 +21,7 @@ class Suitesparse(Package):
         # with a lot of convoluted logic in it.
         # Any kind of customization will need to go through filtering of that file
 
-        # FIXME : this actually uses the current workaround
-        # FIXME : (blas / lapack always provide libblas and liblapack as aliases)
-        make('install', 'INSTALL=%s' % prefix, 'BLAS=-lblas', 'LAPACK=-llapack')
-
+        make('install',
+             'INSTALL=%s' % prefix,
+             'BLAS=%s' % spec['blas'].package.blas_ld_flags,
+             'LAPACK=%s' % spec['lapack'].package.lapack_ld_flags)

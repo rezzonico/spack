@@ -1,6 +1,7 @@
+from spack.provider_contracts import LapackProviderContract
 from spack import *
 
-class NetlibLapack(Package):
+class NetlibLapack(LapackProviderContract, Package):
     """
     LAPACK version 3.X is a comprehensive FORTRAN library that does
     linear algebra operations including matrix inversions, least
@@ -57,3 +58,12 @@ class NetlibLapack(Package):
         make()
         make("install")
 
+    @property
+    def lapack_include_flags(self):
+        include_path = self.prefix.include
+        return '-I%s' % include_path
+
+    @property
+    def lapack_ld_flags(self):
+        library_path = self.prefix.lib
+        return '-L%s -llapack' % library_path

@@ -1,7 +1,11 @@
+from spack.provider_contracts import LapackProviderContract, BlasProviderContract
 from spack import *
 
-class Openblas(Package):
-    """OpenBLAS: An optimized BLAS library"""
+
+class Openblas(LapackProviderContract, BlasProviderContract, Package):
+    """
+    OpenBLAS: An optimized BLAS library
+    """
     homepage = "http://www.openblas.net"
     url      = "http://github.com/xianyi/OpenBLAS/archive/v0.2.15.tar.gz"
 
@@ -25,3 +29,21 @@ class Openblas(Package):
         with working_dir(prefix.lib):
             symlink('libopenblas.a', 'liblapack.a')
             symlink('libopenblas.so', 'liblapack.so')
+
+    @property
+    def blas_include_flags(self):
+        include_path = self.prefix.include
+        return '-I%s' % include_path
+
+    @property
+    def blas_ld_flags(self):
+        library_path = self.prefix.lib
+        return '-L%s -lopenblas' % library_path
+
+    @property
+    def lapack_include_flags(self):
+        return self.blas_include_flags
+
+    @property
+    def lapack_ld_flags(self):
+        return self.blas_ld_flags
