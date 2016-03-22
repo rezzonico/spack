@@ -284,7 +284,7 @@ class TclModule(EnvModule):
 
 class LmodModule(EnvModule):
     name = 'lmod'
-    path = join_path(spack.share_path, "lmod", "modulefiles")
+    path = join_path(spack.share_path, "lmod")
 
     formats = {
         PrependPath: 'prepend_path("{name}", "{value}")\n',
@@ -297,14 +297,22 @@ class LmodModule(EnvModule):
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
         # Sets tha appropriate category to be used with the 'family' function
-        if self.spec.name in spack.compilers.supported_compilers():
-            self.family = 'compiler'
-        elif self.spec.package.provides('mpi'):
-            self.family = 'mpi'
-        else:
-            self.family = None
+        self.family = self._guess_family(spec)
         # Sets the root directory for this architecture
         self.modules_root = join_path(LmodModule.path, self.spec.architecture)
+
+    def _guess_family(self, spec):
+        # What is defined at package level takes precedence
+        if hasattr(spec.package, 'family'):
+            return spec.package.family
+        # If it is in the list of supported compilers family -> compiler
+        if spec.name in spack.compilers.supported_compilers():
+            return 'compiler'
+        # If it provides mpi family -> mpi
+        if spec.package.provides('mpi'):
+            return 'mpi'
+        # No family
+        return None
 
     @property
     def file_name(self):
