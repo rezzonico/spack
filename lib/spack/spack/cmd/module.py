@@ -6,7 +6,7 @@
 # Written by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
 # LLNL-CODE-647188
 #
-# For details, see https://scalability-llnl.github.io/spack
+# For details, see https://github.com/llnl/spack
 # Please also see the LICENSE file for our notice and the LGPL.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 import sys
 import os
 import shutil
-from external import argparse
+import argparse
 
 import llnl.util.tty as tty
 from llnl.util.lang import partition_list
@@ -58,14 +58,14 @@ def module_find(mtype, spec_array):
        should type to use that package's module.
     """
     if mtype not in module_types:
-        tty.die("Invalid module type: '%s'.  Options are %s." % (mtype, comma_or(module_types)))
+        tty.die("Invalid module type: '%s'.  Options are %s" % (mtype, comma_or(module_types)))
 
     specs = spack.cmd.parse_specs(spec_array)
     if len(specs) > 1:
         tty.die("You can only pass one spec.")
     spec = specs[0]
 
-    specs = [s for s in spack.db.installed_package_specs() if s.satisfies(spec)]
+    specs = spack.installed_db.query(spec)
     if len(specs) == 0:
         tty.die("No installed packages match spec %s" % spec)
 
@@ -78,15 +78,15 @@ def module_find(mtype, spec_array):
     mt = module_types[mtype]
     mod = mt(specs[0])
     if not os.path.isfile(mod.file_name):
-        tty.die("No %s module is installed for %s." % (mtype, spec))
+        tty.die("No %s module is installed for %s" % (mtype, spec))
 
-    print mod.use_name
+    print(mod.use_name)
 
 
 def module_refresh():
     """Regenerate all module files for installed packages known to
        spack (some packages may no longer exist)."""
-    specs = [s for s in spack.db.installed_known_package_specs()]
+    specs = [s for s in spack.installed_db.query(installed=True, known=True)]
 
     for name, cls in module_types.items():
         tty.msg("Regenerating %s module files." % name)
@@ -94,7 +94,7 @@ def module_refresh():
             shutil.rmtree(cls.path, ignore_errors=False)
         mkdirp(cls.path)
         for spec in specs:
-            tty.debug("   Writing file for %s." % spec)
+            tty.debug("   Writing file for %s" % spec)
             cls(spec).write()
 
 
