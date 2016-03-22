@@ -286,6 +286,14 @@ class LmodModule(EnvModule):
     name = 'lmod'
     path = join_path(spack.share_path, "lmod", "modulefiles")
 
+    formats = {
+        PrependPath: 'prepend_path("{name}", "{value}")\n',
+        AppendPath: 'append-path("{name}", "{value}")\n',
+        RemovePath: 'remove-path("{name}", "{value}")\n',
+        SetEnv: 'setenv("{name}", "{value})"\n',
+        UnsetEnv: 'unsetenv("{name}")\n'
+    }
+
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
         # Sets tha appropriate category to be used with the 'family' function
@@ -336,43 +344,41 @@ class LmodModule(EnvModule):
                 compiler_version=compiler_version
             )
 
-    def _write(self, m_file):
+    def write_header(self, module_file):
         # Header as in
         # https://www.tacc.utexas.edu/research-development/tacc-projects/lmod/advanced-user-guide/more-about-writing-module-files
-        m_file.write("-- -*- lua -*-\n")
+        module_file.write("-- -*- lua -*-\n")
         # Short description -> whatis()
         if self.short_description:
-            m_file.write("whatis([[Name : {name}]])\n".format(name=self.spec.name))
-            m_file.write("whatis([[Version : {version}]])\n".format(version=self.spec.version))
+            module_file.write("whatis([[Name : {name}]])\n".format(name=self.spec.name))
+            module_file.write("whatis([[Version : {version}]])\n".format(version=self.spec.version))
 
         # Long description -> help()
         if self.long_description:
             doc = re.sub(r'"', '\"', self.long_description)
-            m_file.write("help([[{documentation}]])\n".format(documentation=doc))
+            module_file.write("help([[{documentation}]])\n".format(documentation=doc))
 
-        # Path alterations
-        for var, dirs in self.paths.items():
-            for directory in dirs:
-                m_file.write("prepend_path(\"{variable}\", \"{directory}\")\n".format(
-                    variable=var,
-                    directory=directory)
-                )
-        m_file.write("prepend_path(\"CMAKE_PREFIX_PATH\", \"{cmake_prefix}\")\n".format(cmake_prefix=self.spec.prefix))
-
+        env = EnvironmentModifications()
         # Add family protection
         if self.family is not None:
-            m_file.write("family(\"{family}\")\n".format(family=self.family))
+            module_file.write('family("{family}")\n'.format(family=self.family))
 
         # Prepend path if family is 'compiler' or 'mpi'
+        modulepath = ''
         if self.family is 'compiler':
             hierarchy_name = self._compiler_module_directory(self.spec.name, self.spec.version)
-            fullname = join_path(self.modules_root, hierarchy_name)
-            m_file.write("prepend_path(\"MODULEPATH\", \"{compiler_directory}\")".format(compiler_directory=fullname))
+            modulepath = join_path(self.modules_root, hierarchy_name)
+
         elif self.family is 'mpi':
             s = self.spec
             hierarchy_name = self._mpi_module_directory(s.compiler.name, s.compiler.version, s.name, s.version)
-            fullname = join_path(self.modules_root, hierarchy_name)
-            m_file.write("prepend_path(\"MODULEPATH\", \"{compiler_directory}\")".format(compiler_directory=fullname))
+            modulepath = join_path(self.modules_root, hierarchy_name)
+
+        if modulepath:
+            env.prepend_path('MODULEPATH', modulepath)
+
+        for item in self.process_environment_command(env):
+            module_file.write(item)
 
     def _use_system_compiler(self):
         """
