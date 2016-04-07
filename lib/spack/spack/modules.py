@@ -205,11 +205,7 @@ class EnvModule(object):
     def remove(self):
         mod_file = self.file_name
         if os.path.exists(mod_file):
-            try:
-                os.remove(mod_file)  # Remove the module file
-                os.removedirs(os.path.dirname(mod_file))  # Remove all the empty directories from the leaf up
-            except OSError:
-                pass  # removedirs throws OSError on first non-empty directory found
+            shutil.rmtree(mod_file, ignore_errors=True)
 
 
 class Dotkit(EnvModule):
