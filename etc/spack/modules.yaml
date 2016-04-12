@@ -5,4 +5,4 @@
 # although users can override these settings in their ~/.spack/modules.yaml.
 # -------------------------------------------------------------------------
 modules:
-  enable: ['tcl', 'dotkit']
+  enable: ['tcl', 'lmod', 'dotkit']
