@@ -383,11 +383,11 @@ class EnvModule(object):
         return tuple()
 
     def autoload(self, spec):
-        m = TclModule(spec)
+        m = type(self)(spec)
         return self.autoload_format.format(module_file=m.use_name)
 
     def prerequisite(self, spec):
-        m = TclModule(spec)
+        m = type(self)(spec)
         return self.prerequisite_format.format(module_file=m.use_name)
 
     def process_environment_command(self, env):
@@ -526,6 +526,13 @@ class LmodModule(EnvModule):
         SetEnv: 'setenv("{name}", "{value}")\n',
         UnsetEnv: 'unsetenv("{name}")\n'
     }
+
+    autoload_format = ('if not isloaded("{module_file}") then\n'
+                       '    LmodMessage("Autoloading {module_file}")\n'
+                       '    load("{module_file}")\n'
+                       'end\n\n')
+
+    prerequisite_format = 'prereq("{module_file}")\n'
 
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
