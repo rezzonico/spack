@@ -320,8 +320,14 @@ section_schemas = {
                         'default': [],
                         'items': {
                             'type': 'string',
-                            'enum': ['tcl', 'dotkit']
+                            'enum': ['tcl', 'dotkit', 'lmod']
                         }
+                    },
+                    'lmod': {
+                        'allOf': [
+                            {'$ref': '#/definitions/module_type_configuration'},  # Base configuration
+                            {}  # Specific tcl extensions
+                        ]
                     },
                     'tcl': {
                         'allOf': [

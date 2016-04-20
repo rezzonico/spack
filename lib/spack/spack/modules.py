@@ -519,11 +519,11 @@ class LmodModule(EnvModule):
     name = 'lmod'
     path = join_path(spack.share_path, "lmod")
 
-    formats = {
+    environment_modifications_formats = {
         PrependPath: 'prepend_path("{name}", "{value}")\n',
         AppendPath: 'append-path("{name}", "{value}")\n',
         RemovePath: 'remove-path("{name}", "{value}")\n',
-        SetEnv: 'setenv("{name}", "{value})"\n',
+        SetEnv: 'setenv("{name}", "{value}")\n',
         UnsetEnv: 'unsetenv("{name}")\n'
     }
 
@@ -585,24 +585,30 @@ class LmodModule(EnvModule):
                 compiler_version=compiler_version
             )
 
-    def write_header(self, module_file):
+    @property
+    def header(self):
         # Header as in
         # https://www.tacc.utexas.edu/research-development/tacc-projects/lmod/advanced-user-guide/more-about-writing-module-files
-        module_file.write("-- -*- lua -*-\n")
+        header = "-- -*- lua -*-\n"
+        header += '-- Module file created by spack (https://github.com/LLNL/spack) on %s\n' % datetime.datetime.now()
+        header += '--\n'
+        header += '-- %s\n' % self.spec.short_spec
+        header += '--\n'
+
         # Short description -> whatis()
         if self.short_description:
-            module_file.write("whatis([[Name : {name}]])\n".format(name=self.spec.name))
-            module_file.write("whatis([[Version : {version}]])\n".format(version=self.spec.version))
+            header += "whatis([[Name : {name}]])\n".format(name=self.spec.name)
+            header += "whatis([[Version : {version}]])\n".format(version=self.spec.version)
 
         # Long description -> help()
         if self.long_description:
             doc = re.sub(r'"', '\"', self.long_description)
-            module_file.write("help([[{documentation}]])\n".format(documentation=doc))
+            header += "help([[{documentation}]])\n".format(documentation=doc)
 
         env = EnvironmentModifications()
         # Add family protection
         if self.family is not None:
-            module_file.write('family("{family}")\n'.format(family=self.family))
+            header += 'family("{family}")\n'.format(family=self.family)
 
         # Prepend path if family is 'compiler' or 'mpi'
         modulepath = ''
@@ -619,7 +625,9 @@ class LmodModule(EnvModule):
             env.prepend_path('MODULEPATH', modulepath)
 
         for item in self.process_environment_command(env):
-            module_file.write(item)
+            header += item
+
+        return header
 
     def _use_system_compiler(self):
         """
