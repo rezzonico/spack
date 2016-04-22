@@ -635,11 +635,62 @@ class LmodModule(EnvModule):
         available.update(self.requires)
         available.update(self.provides)
         available_parts = [self.token_to_path(x, available[x]) for x in self.hierarchy_tokens if x in available]
+        # Missing parts
+        missing = [x for x in self.hierarchy_tokens if x not in available]
+        # Direct path we provide on top of compilers
         modulepath = join_path(self.modules_root, *available_parts)
         env = EnvironmentModifications()
         env.prepend_path('MODULEPATH', modulepath)
         for line in self.process_environment_command(env):
             entry += line
+
+        def local_variable(x):
+            lower, upper = x.lower(), x.upper()
+            fmt = 'local {lower}_name = os.getenv("LMOD_{upper}_NAME")\n'
+            fmt += 'local {lower}_version = os.getenv("LMOD_{upper}_VERSION")\n'
+            return fmt.format(lower=lower, upper=upper)
+
+        def set_variables_for_service(env, x):
+            upper = x.upper()
+            env.set('LMOD_{upper}_NAME'.format(upper=upper), self.provides[x].name)
+            env.set('LMOD_{upper}_VERSION'.format(upper=upper), self.provides[x].version)
+
+        def conditional_modulepath_modifications(item):
+            entry = 'if '
+            needed = []
+            for x in self.hierarchy_tokens:
+                if x in missing:
+                    needed.append('{x}_name '.format(x=x))
+            entry += 'and '.join(needed) + 'then\n'
+            entry += '  local t = pathJoin("{root}"'.format(root=self.modules_root)
+            for x in item:
+                if x in missing:
+                    entry += ', {lower}_name, {lower}_version'.format(lower=x.lower())
+                else:
+                    entry += ', "{x}"'.format(x=self.token_to_path(x, available[x]))
+            entry += ')\n'
+            entry += '  prepend_path("MODULEPATH", t)\n'
+            entry += 'end\n\n'
+            return entry
+
+        if 'compiler' not in self.provides:
+            # Retrieve variables
+            entry += '\n'
+            for x in missing:
+                entry += local_variable(x)
+            entry += '\n'
+            # Conditional modifications
+            conditionals = [x for x in self._hierarchy_to_be_provided() if any(t in missing for t in x)]
+            for item in conditionals:
+                entry += conditional_modulepath_modifications(item)
+
+            # Set environment variables for the services we provide
+            env = EnvironmentModifications()
+            for x in self.provides:
+                set_variables_for_service(env, x)
+            for line in self.process_environment_command(env):
+                entry += line
+
         return entry
 
     @property
