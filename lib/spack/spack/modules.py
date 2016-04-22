@@ -552,10 +552,12 @@ class LmodModule(EnvModule):
 
     family_format = 'family("{family}")\n'
 
+    path_part = join_path('{token.name}', '{token.version}')
+
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
         # Sets tha appropriate category to be used with the 'family' function
-        self.family = self._guess_family(spec)
+        # FIXME : self.family = self._guess_family(spec)
         # Sets the root directory for this architecture
         self.modules_root = join_path(LmodModule.path, self.spec.architecture)
         # Sets which tokens (virtual dependencies) will be used to construct the hierarchy
@@ -563,82 +565,82 @@ class LmodModule(EnvModule):
         self.hierarchy_tokens = ['mpi', 'compiler']
         additional_tokens = CONFIGURATION.get('lmod', {}).get('hierarchical_scheme', [])
         self.hierarchy_tokens = additional_tokens + self.hierarchy_tokens
-        # Check what are the services I need (this will determine where the module file will be written)
-        self.substitutions = {
+        # TODO : add 'requires' taking care of treating Core compilers correctly
+        # Keep track of the requirements that this package has in terms of virtual packages
+        # that participate in the hierarchical structure
+        self.requires = {
             'compiler': self.spec.compiler
         }
         for x in self.hierarchy_tokens:  # For each virtual dependency in the hierarchy
-            if x in self.spec:  # if I depend on it
-                self.substitutions[x] = self.spec[x]  # record the actual provider
+            if x in self.spec and not self.spec.package.provides(x):  # if I depend on it
+                self.requires[x] = self.spec[x]  # record the actual provider
+        # Check what are the services I need (this will determine where the module file will be written)
+        self.substitutions = {}
+        self.substitutions.update(self.requires)
+        # TODO : complete substitutions
         # Check what service I provide to others
-        self.provides = set()
+        self.provides = {}
         # If it is in the list of supported compilers family -> compiler
         if self.spec.name in spack.compilers.supported_compilers():
-            self.provides.add('compiler')
+            self.provides['compiler'] = spack.spec.CompilerSpec(str(self.spec))
 
         for x in self.hierarchy_tokens:
             if self.spec.package.provides(x):
-                self.provides.add(x)
+                self.provides[x] = self.spec[x]
 
     def _hierarchy_token_combinations(self):
         """
         Yields all the relevant combinations that could appear in the hierarchy
         """
-        for ii in range(len(self.hierarchy_tokens)):
+        for ii in range(len(self.hierarchy_tokens) + 1):
             for item in itertools.combinations(self.hierarchy_tokens, ii):
                 if 'compiler' in item:
                     yield item
 
-    def _guess_family(self, spec):
-        # What is defined at package level takes precedence
-        if hasattr(spec.package, 'family'):
-            return spec.package.family
-        # If it is in the list of supported compilers family -> compiler
-        if spec.name in spack.compilers.supported_compilers():
-            return 'compiler'
-        # If it provides mpi family -> mpi
-        if spec.package.provides('mpi'):
-            return 'mpi'
-        # No family
-        return None
+    def _hierarchy_to_be_provided(self):
+        """
+        Filters a list of hierarchy tokens and yields only the one that we need to provide
+        """
+        for item in self._hierarchy_token_combinations():
+            if any(x in self.provides for x in item):
+                yield item
+
+    def _hierarchy_path_formats(self):
+        for item in self._hierarchy_token_combinations():
+            path = ''
+            for x in item:
+                path = join_path(path, '{' + x +'.name}', '{' + x +'.version}')
+            yield path
+
+    def token_to_path(self, name, value):
+        if name == 'compiler' and not self.is_system_compiler(value):
+            return 'Core'
+        return self.path_part.format(token=value)
 
     @property
     def file_name(self):
-        if self._use_system_compiler() and not self._is_mpi_dependent():
-            # If the module is installed using the system compiler and does not need MPI put the modulefile in 'Core'
-            hierarchy_name = 'Core'
-        elif not self._is_mpi_dependent():
-            # If the module is serial and built using a compiler other than the system one,
-            # put the modulefile in '<Compiler>/<Version>'
-            hierarchy_name = self._compiler_module_directory(self.spec.compiler.name, self.spec.compiler.version)
-        else:
-            # If the module is MPI parallel then put the modulefile in
-            # '<MPI>/<MPI-Version>/<Compiler/<Compiler-Version>'
-            compiler = self.spec.compiler
-            mpi = self.spec['mpi']
-            hierarchy_name = self._mpi_module_directory(compiler.name, compiler.version, mpi.name, mpi.version)
+        parts = [self.token_to_path(x, self.requires[x]) for x in self.hierarchy_tokens if x in self.requires]
+        hierarchy_name = join_path(*parts)
         fullname = join_path(self.modules_root, hierarchy_name, self.use_name + '.lua')
         return fullname
 
     @property
     def use_name(self):
-        return join_path(self.spec.name, str(self.spec.version) + '-' + self.spec.dag_hash(length=6))
+        return self.token_to_path('', self.spec) + '-' + self.spec.dag_hash(length=6)
 
-    @staticmethod
-    def _compiler_module_directory(name, version):
-        return '{compiler_name}/{compiler_version}'.format(
-                compiler_name=name,
-                compiler_version=version
-            )
-
-    @staticmethod
-    def _mpi_module_directory(compiler_name, compiler_version, mpi_name, mpi_version):
-        return '{mpi_name}/{mpi_version}/{compiler_name}/{compiler_version}'.format(
-                mpi_name=mpi_name,
-                mpi_version=mpi_version,
-                compiler_name=compiler_name,
-                compiler_version=compiler_version
-            )
+    def modulepath_modifications(self):
+        # What is available is what we require plus what we provide
+        entry = ''
+        available = {}
+        available.update(self.requires)
+        available.update(self.provides)
+        available_parts = [self.token_to_path(x, available[x]) for x in self.hierarchy_tokens if x in available]
+        modulepath = join_path(self.modules_root, *available_parts)
+        env = EnvironmentModifications()
+        env.prepend_path('MODULEPATH', modulepath)
+        for line in self.process_environment_command(env):
+            entry += line
+        return entry
 
     @property
     def header(self):
@@ -660,42 +662,59 @@ class LmodModule(EnvModule):
             doc = re.sub(r'"', '\"', self.long_description)
             header += "help([[{documentation}]])\n".format(documentation=doc)
 
-        env = EnvironmentModifications()
-        # Add family directives
-        for x in self.provides:
-            header += self.family_format.format(family=x)
+        # Certain things need to be done only if we provide a service
+        if self.provides:
+            # Add family directives
+            header += '\n'
+            for x in self.provides:
+                header += self.family_format.format(family=x)
+            header += '\n'
+            header += '-- MODULEPATH modifications\n'
+            header += '\n'
+            # Modify MODULEPATH
+            header += self.modulepath_modifications()
+            # Set environment variables for services we provide
+            #header += self.set_services()
+            header += '\n'
+            header += '-- END MODULEPATH modifications\n'
+            header += '\n'
+
+            #a = [x for x in self._hierarchy_to_be_provided()]
+            #need_to_provide = [x for x in self.hierarchy_tokens if x not in self.substitutions]
+            #combinations = [x for x in self._hierarchy_path_formats()]
 
         # Prepend path if family is 'compiler' or 'mpi'
-        modulepath = ''
-        if self.family is 'compiler':
-            hierarchy_name = self._compiler_module_directory(self.spec.name, self.spec.version)
-            modulepath = join_path(self.modules_root, hierarchy_name)
-
-        elif self.family is 'mpi':
-            s = self.spec
-            hierarchy_name = self._mpi_module_directory(s.compiler.name, s.compiler.version, s.name, s.version)
-            modulepath = join_path(self.modules_root, hierarchy_name)
-
-        if modulepath:
-            env.prepend_path('MODULEPATH', modulepath)
-
-        for item in self.process_environment_command(env):
-            header += item
+        # env = EnvironmentModifications()
+        # modulepath = ''
+        # if self.family is 'compiler':
+        #     hierarchy_name = self._compiler_module_directory(self.spec.name, self.spec.version)
+        #     modulepath = join_path(self.modules_root, hierarchy_name)
+        #
+        # elif self.family is 'mpi':
+        #     s = self.spec
+        #     hierarchy_name = self._mpi_module_directory(s.compiler.name, s.compiler.version, s.name, s.version)
+        #     modulepath = join_path(self.modules_root, hierarchy_name)
+        #
+        # if modulepath:
+        #     env.prepend_path('MODULEPATH', modulepath)
+        #
+        # for item in self.process_environment_command(env):
+        #     header += item
 
         return header
 
-    def _use_system_compiler(self):
+    def is_system_compiler(self, compiler):
         """
         True if the spec uses the OS default compiler
 
         :return: True or False
         """
         # FIXME: How can I check if a spec has been constructed using the OS default compiler?
-        compiler = spack.compilers.compiler_for_spec(self.spec.compiler)
+        compiler = spack.compilers.compiler_for_spec(compiler)
         compiler_directory = os.path.dirname(compiler.cc)
         if spack.prefix in compiler_directory:
-            return False
-        return True
+            return True
+        return False
 
     def _is_mpi_dependent(self):
         """
