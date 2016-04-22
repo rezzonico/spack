@@ -326,7 +326,9 @@ section_schemas = {
                     'lmod': {
                         'allOf': [
                             {'$ref': '#/definitions/module_type_configuration'},  # Base configuration
-                            {}  # Specific tcl extensions
+                            {
+                                'hierarchical_scheme': {'$ref': '#/definitions/array_of_strings'}
+                            }  # Specific lmod extensions
                         ]
                     },
                     'tcl': {

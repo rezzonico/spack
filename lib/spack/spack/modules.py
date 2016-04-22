@@ -40,22 +40,23 @@ various shell-support files in $SPACK/share/spack/setup-env.*.
 
 Each hook in hooks/ implements the logic for writing its specific type of module file.
 """
+import collections
 import copy
 import datetime
+import itertools
 import os
 import os.path
 import re
-import textwrap
 import string
+import textwrap
 
 import llnl.util.tty as tty
 import spack
+import spack.compilers  # Needed by LmodModules
 import spack.config
 from llnl.util.filesystem import join_path, mkdirp
 from spack.build_environment import parent_class_modules, set_module_variables_for_package
 from spack.environment import *
-
-import spack.compilers  # Needed by LmodModules
 
 __all__ = ['EnvModule', 'Dotkit', 'TclModule']
 
@@ -520,10 +521,19 @@ class TclModule(EnvModule):
                 line = line.format(**naming_tokens)
             yield line
 
+# To construct an arbitrary hierarchy of module files:
+# 1. Parse the configuration file and check that all the items in hierarchical_scheme are indeed virtual packages
+#    This needs to be done only once at start-up
+# 2. Order the stack as `hierarchical_scheme + ['mpi, 'compiler']
+# 3. Check which of the services are provided by the package -> may be more than one
+# 4. Check which of the services are needed by the package -> this determines where to write the module file
+# 5. For each combination of services in which we have at least one provider here add the appropriate conditional
+#    MODULEPATH modifications
+
 
 class LmodModule(EnvModule):
     name = 'lmod'
-    path = join_path(spack.share_path, "lmod")
+    path = join_path(spack.share_path, "lmod-automated")
 
     environment_modifications_formats = {
         PrependPath: 'prepend_path("{name}", "{value}")\n',
@@ -540,12 +550,44 @@ class LmodModule(EnvModule):
 
     prerequisite_format = 'prereq("{module_file}")\n'
 
+    family_format = 'family("{family}")\n'
+
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
         # Sets tha appropriate category to be used with the 'family' function
         self.family = self._guess_family(spec)
         # Sets the root directory for this architecture
         self.modules_root = join_path(LmodModule.path, self.spec.architecture)
+        # Sets which tokens (virtual dependencies) will be used to construct the hierarchy
+        # TODO : Check that extra tokens specified in configuration file are actually virtual dependencies
+        self.hierarchy_tokens = ['mpi', 'compiler']
+        additional_tokens = CONFIGURATION.get('lmod', {}).get('hierarchical_scheme', [])
+        self.hierarchy_tokens = additional_tokens + self.hierarchy_tokens
+        # Check what are the services I need (this will determine where the module file will be written)
+        self.substitutions = {
+            'compiler': self.spec.compiler
+        }
+        for x in self.hierarchy_tokens:  # For each virtual dependency in the hierarchy
+            if x in self.spec:  # if I depend on it
+                self.substitutions[x] = self.spec[x]  # record the actual provider
+        # Check what service I provide to others
+        self.provides = set()
+        # If it is in the list of supported compilers family -> compiler
+        if self.spec.name in spack.compilers.supported_compilers():
+            self.provides.add('compiler')
+
+        for x in self.hierarchy_tokens:
+            if self.spec.package.provides(x):
+                self.provides.add(x)
+
+    def _hierarchy_token_combinations(self):
+        """
+        Yields all the relevant combinations that could appear in the hierarchy
+        """
+        for ii in range(len(self.hierarchy_tokens)):
+            for item in itertools.combinations(self.hierarchy_tokens, ii):
+                if 'compiler' in item:
+                    yield item
 
     def _guess_family(self, spec):
         # What is defined at package level takes precedence
@@ -580,7 +622,7 @@ class LmodModule(EnvModule):
 
     @property
     def use_name(self):
-        return join_path(self.spec.name, str(self.spec.version))
+        return join_path(self.spec.name, str(self.spec.version) + '-' + self.spec.dag_hash(length=6))
 
     @staticmethod
     def _compiler_module_directory(name, version):
@@ -619,9 +661,9 @@ class LmodModule(EnvModule):
             header += "help([[{documentation}]])\n".format(documentation=doc)
 
         env = EnvironmentModifications()
-        # Add family protection
-        if self.family is not None:
-            header += 'family("{family}")\n'.format(family=self.family)
+        # Add family directives
+        for x in self.provides:
+            header += self.family_format.format(family=x)
 
         # Prepend path if family is 'compiler' or 'mpi'
         modulepath = ''
