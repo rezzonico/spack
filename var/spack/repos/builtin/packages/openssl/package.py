@@ -48,14 +48,14 @@ class Openssl(Package):
                         tty.warn('Consider updating to the latest version of this package.')
                         tty.warn('More details at {homepage}'.format(homepage=Openssl.homepage))
                         warnings_given_to_user[version] = True
-                    else:
-                        openssl_url = latest_url
-                    # Store the computed URL
-                    openssl_urls[version] = openssl_url
-                    # Store the updated dictionary of URLS
-                    Openssl._openssl_url = openssl_urls
-                    # Store the updated dictionary of warnings
-                    Openssl._warnings_given = warnings_given_to_user
+                else:
+                    openssl_url = latest_url
+                # Store the computed URL
+                openssl_urls[version] = openssl_url
+                # Store the updated dictionary of URLS
+                Openssl._openssl_url = openssl_urls
+                # Store the updated dictionary of warnings
+                Openssl._warnings_given = warnings_given_to_user
                     
         except IOError:
             openssl_url = latest_url

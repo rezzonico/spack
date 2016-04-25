@@ -556,16 +556,16 @@ class LmodModule(EnvModule):
 
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
-        # Sets tha appropriate category to be used with the 'family' function
-        # FIXME : self.family = self._guess_family(spec)
         # Sets the root directory for this architecture
         self.modules_root = join_path(LmodModule.path, self.spec.architecture)
         # Sets which tokens (virtual dependencies) will be used to construct the hierarchy
         # TODO : Check that extra tokens specified in configuration file are actually virtual dependencies
         self.hierarchy_tokens = ['mpi', 'compiler']
-        additional_tokens = CONFIGURATION.get('lmod', {}).get('hierarchical_scheme', [])
+        lmod_configuration = CONFIGURATION.get('lmod', {})
+        additional_tokens = lmod_configuration.get('hierarchical_scheme', [])
         self.hierarchy_tokens = additional_tokens + self.hierarchy_tokens
-        # TODO : add 'requires' taking care of treating Core compilers correctly
+        # Retrieve core compilers
+        self.core_compilers = lmod_configuration.get('core_compilers', [])
         # Keep track of the requirements that this package has in terms of virtual packages
         # that participate in the hierarchical structure
         self.requires = {
@@ -582,6 +582,9 @@ class LmodModule(EnvModule):
         self.provides = {}
         # If it is in the list of supported compilers family -> compiler
         if self.spec.name in spack.compilers.supported_compilers():
+            self.provides['compiler'] = spack.spec.CompilerSpec(str(self.spec))
+        # Special case for llvm
+        if self.spec.name == 'llvm':
             self.provides['compiler'] = spack.spec.CompilerSpec(str(self.spec))
 
         for x in self.hierarchy_tokens:
@@ -605,15 +608,8 @@ class LmodModule(EnvModule):
             if any(x in self.provides for x in item):
                 yield item
 
-    def _hierarchy_path_formats(self):
-        for item in self._hierarchy_token_combinations():
-            path = ''
-            for x in item:
-                path = join_path(path, '{' + x +'.name}', '{' + x +'.version}')
-            yield path
-
     def token_to_path(self, name, value):
-        if name == 'compiler' and not self.is_system_compiler(value):
+        if name == 'compiler' and str(value) in self.core_compilers:
             return 'Core'
         return self.path_part.format(token=value)
 
@@ -730,50 +726,4 @@ class LmodModule(EnvModule):
             header += '-- END MODULEPATH modifications\n'
             header += '\n'
 
-            #a = [x for x in self._hierarchy_to_be_provided()]
-            #need_to_provide = [x for x in self.hierarchy_tokens if x not in self.substitutions]
-            #combinations = [x for x in self._hierarchy_path_formats()]
-
-        # Prepend path if family is 'compiler' or 'mpi'
-        # env = EnvironmentModifications()
-        # modulepath = ''
-        # if self.family is 'compiler':
-        #     hierarchy_name = self._compiler_module_directory(self.spec.name, self.spec.version)
-        #     modulepath = join_path(self.modules_root, hierarchy_name)
-        #
-        # elif self.family is 'mpi':
-        #     s = self.spec
-        #     hierarchy_name = self._mpi_module_directory(s.compiler.name, s.compiler.version, s.name, s.version)
-        #     modulepath = join_path(self.modules_root, hierarchy_name)
-        #
-        # if modulepath:
-        #     env.prepend_path('MODULEPATH', modulepath)
-        #
-        # for item in self.process_environment_command(env):
-        #     header += item
-
         return header
-
-    def is_system_compiler(self, compiler):
-        """
-        True if the spec uses the OS default compiler
-
-        :return: True or False
-        """
-        # FIXME: How can I check if a spec has been constructed using the OS default compiler?
-        compiler = spack.compilers.compiler_for_spec(compiler)
-        compiler_directory = os.path.dirname(compiler.cc)
-        if spack.prefix in compiler_directory:
-            return True
-        return False
-
-    def _is_mpi_dependent(self):
-        """
-        Traverse the DAG (excluding root) to see if the spec depends on MPI
-
-        :return: True or False
-        """
-        for item in self.spec.traverse(root=False):
-            if 'mpi' in item:
-                return True
-        return False

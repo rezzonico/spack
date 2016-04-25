@@ -327,6 +327,7 @@ section_schemas = {
                         'allOf': [
                             {'$ref': '#/definitions/module_type_configuration'},  # Base configuration
                             {
+                                'core_compilers': {'$ref': '#/definitions/array_of_strings'},
                                 'hierarchical_scheme': {'$ref': '#/definitions/array_of_strings'}
                             }  # Specific lmod extensions
                         ]
