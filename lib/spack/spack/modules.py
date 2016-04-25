@@ -533,7 +533,7 @@ class TclModule(EnvModule):
 
 class LmodModule(EnvModule):
     name = 'lmod'
-    path = join_path(spack.share_path, "lmod-automated")
+    path = join_path(spack.share_path, "lmod")
 
     environment_modifications_formats = {
         PrependPath: 'prepend_path("{name}", "{value}")\n',
