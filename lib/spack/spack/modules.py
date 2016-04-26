@@ -586,6 +586,7 @@ class LmodModule(EnvModule):
         # Special case for llvm
         if self.spec.name == 'llvm':
             self.provides['compiler'] = spack.spec.CompilerSpec(str(self.spec))
+            self.provides['compiler'].name = 'clang'
 
         for x in self.hierarchy_tokens:
             if self.spec.package.provides(x):
@@ -721,7 +722,6 @@ class LmodModule(EnvModule):
             # Modify MODULEPATH
             header += self.modulepath_modifications()
             # Set environment variables for services we provide
-            #header += self.set_services()
             header += '\n'
             header += '-- END MODULEPATH modifications\n'
             header += '\n'
