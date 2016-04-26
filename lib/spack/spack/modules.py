@@ -40,7 +40,6 @@ various shell-support files in $SPACK/share/spack/setup-env.*.
 
 Each hook in hooks/ implements the logic for writing its specific type of module file.
 """
-import collections
 import copy
 import datetime
 import itertools
@@ -554,18 +553,16 @@ class LmodModule(EnvModule):
 
     path_part = join_path('{token.name}', '{token.version}')
 
+    # TODO : Check that extra tokens specified in configuration file are actually virtual dependencies
+    configuration = CONFIGURATION.get('lmod', {})
+    hierarchy_tokens = configuration.get('hierarchical_scheme', []) + ['mpi', 'compiler']
+
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
         # Sets the root directory for this architecture
         self.modules_root = join_path(LmodModule.path, self.spec.architecture)
-        # Sets which tokens (virtual dependencies) will be used to construct the hierarchy
-        # TODO : Check that extra tokens specified in configuration file are actually virtual dependencies
-        self.hierarchy_tokens = ['mpi', 'compiler']
-        lmod_configuration = CONFIGURATION.get('lmod', {})
-        additional_tokens = lmod_configuration.get('hierarchical_scheme', [])
-        self.hierarchy_tokens = additional_tokens + self.hierarchy_tokens
         # Retrieve core compilers
-        self.core_compilers = lmod_configuration.get('core_compilers', [])
+        self.core_compilers = self.configuration.get('core_compilers', [])
         # Keep track of the requirements that this package has in terms of virtual packages
         # that participate in the hierarchical structure
         self.requires = {

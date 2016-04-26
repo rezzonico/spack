@@ -101,17 +101,17 @@ def parse_specs(args, **kwargs):
         specs = spack.spec.parse(args)
         for spec in specs:
             if concretize:
-                spec.concretize() # implies normalize
+                spec.concretize()  # implies normalize
             elif normalize:
                 spec.normalize()
 
         return specs
 
-    except spack.parse.ParseError, e:
+    except spack.parse.ParseError as e:
         tty.error(e.message, e.string, e.pos * " " + "^")
         sys.exit(1)
 
-    except spack.spec.SpecError, e:
+    except spack.spec.SpecError as e:
         tty.error(e.message)
         sys.exit(1)
 
