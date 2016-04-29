@@ -964,8 +964,8 @@ class Package(object):
                      install(env_path, env_install_path)
                      dump_packages(self.spec, packages_dir)
 
-                # Run post install hooks before build stage is removed.
-                spack.hooks.post_install(self)
+                    # Run post install hooks before build stage is removed.
+                    spack.hooks.post_install(self)
 
             # Stop timer.
             self._total_time = time.time() - start_time
@@ -1172,11 +1172,12 @@ class Package(object):
                 raise PackageStillNeededError(self.spec, dependents)
 
         # Pre-uninstall hook runs first.
-        spack.hooks.pre_uninstall(self)
-
-        # Uninstalling in Spack only requires removing the prefix.
-        self.remove_prefix()
-        spack.installed_db.remove(self.spec)
+        with self._prefix_write_lock():
+            spack.hooks.pre_uninstall(self)
+            # Uninstalling in Spack only requires removing the prefix.
+            self.remove_prefix()
+            #
+            spack.installed_db.remove(self.spec)
         tty.msg("Successfully uninstalled %s" % self.spec.short_spec)
 
         # Once everything else is done, run post install hooks
