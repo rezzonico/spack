@@ -29,6 +29,7 @@ import tempfile
 from urlparse import urljoin
 
 import llnl.util.tty as tty
+import llnl.util.lock
 from llnl.util.filesystem import *
 
 import spack.util.pattern as pattern
@@ -89,7 +90,7 @@ class Stage(object):
     """
 
     def __init__(self, url_or_fetch_strategy,
-                 name=None, mirror_path=None, keep=False, path=None):
+                 name=None, mirror_path=None, keep=False, path=None, lock=True):
         """Create a stage object.
            Parameters:
              url_or_fetch_strategy
@@ -142,7 +143,14 @@ class Stage(object):
 
         # Flag to decide whether to delete the stage folder on exit or not
         self.keep = keep
-
+        # File lock for the stage directory
+        self_lock_file = None
+        self._lock = None
+        if lock:
+            self._lock_file = join_path(spack.stage_path, self.name + '.lock')
+            if not os.path.exists(self._lock_file):
+                touch(self._lock_file)
+            self._lock = llnl.util.lock.Lock(self._lock_file)
 
     def __enter__(self):
         """
@@ -151,6 +159,8 @@ class Stage(object):
         Returns:
             self
         """
+        if self._lock is not None:
+            self._lock.acquire_write(timeout=60)
         self.create()
         return self
 
@@ -172,7 +182,8 @@ class Stage(object):
         # Delete when there are no exceptions, unless asked to keep.
         if exc_type is None and not self.keep:
             self.destroy()
-
+        if self._lock is not None:
+            self._lock.release_write()
 
     def _need_to_create_path(self):
         """Makes sure nothing weird has happened since the last time we

@@ -37,6 +37,7 @@ import os
 import re
 import textwrap
 import time
+import contextlib
 import glob
 
 import llnl.util.tty as tty
@@ -62,6 +63,7 @@ from spack.util.environment import dump_environment
 from spack.util.executable import ProcessError
 from spack.version import *
 from urlparse import urlparse
+import llnl.util.lock
 
 """Allowed URL schemes for spack packages."""
 _ALLOWED_URL_SCHEMES = ["http", "https", "ftp", "file", "git"]
@@ -328,6 +330,7 @@ class Package(object):
     def __init__(self, spec):
         # this determines how the package should be built.
         self.spec = spec
+        self._prefix_lock = None # Lock on the prefix shared resource. Will be set in prefix property
 
         # Name of package is the name of its module, without the
         # containing module names.
@@ -352,7 +355,7 @@ class Package(object):
         # Version-ize the keys in versions dict
         try:
             self.versions = dict((Version(v), h) for v,h in self.versions.items())
-        except ValueError, e:
+        except ValueError as e:
             raise ValueError("In package %s: %s" % (self.name, e.message))
 
         # stage used to build this package.
@@ -651,6 +654,18 @@ class Package(object):
                     dependents.append(spec)
         return dependents
 
+    @property
+    def prefix_lock(self):
+        if self._prefix_lock is None:
+            dirname = join_path(os.path.dirname(self.spec.prefix), '.locks')
+            basename = os.path.basename(self.spec.prefix)
+            lock_file = join_path(dirname, basename)
+            if not os.path.exists(lock_file):
+                tty.debug('TOUCH FILE : {0}'.format(lock_file))
+                os.makedirs(dirname)
+                touch(lock_file)
+            self._prefix_lock = llnl.util.lock.Lock(lock_file)
+        return self._prefix_lock
 
     @property
     def prefix(self):
@@ -832,6 +847,21 @@ class Package(object):
         resource_stage_folder = '-'.join(pieces)
         return resource_stage_folder
 
+    @contextlib.contextmanager
+    def _prefix_read_lock(self):
+        try:
+            self.prefix_lock.acquire_read(60)
+            yield self
+        finally:
+            self.prefix_lock.release_read()
+
+    @contextlib.contextmanager
+    def _prefix_write_lock(self):
+        try:
+            self.prefix_lock.acquire_write(60)
+            yield self
+        finally:
+            self.prefix_lock.release_write()
 
     def do_install(self,
                    keep_prefix=False,  keep_stage=False, ignore_deps=False,
@@ -861,9 +891,10 @@ class Package(object):
             return
 
         # Ensure package is not already installed
-        if spack.install_layout.check_installed(self.spec):
-            tty.msg("%s is already installed in %s" % (self.name, self.prefix))
-            return
+        with self._prefix_read_lock():
+            if spack.install_layout.check_installed(self.spec):
+                tty.msg("%s is already installed in %s" % (self.name, self.prefix))
+                return
 
         tty.msg("Installing %s" % self.name)
 
@@ -890,7 +921,8 @@ class Package(object):
             tty.msg("Building %s" % self.name)
 
             self.stage.keep = keep_stage
-            with self.stage:
+
+            with contextlib.nested(self.stage, self._prefix_write_lock()):
                 # Run the pre-install hook in the child process after
                 # the directory is created.
                 spack.hooks.pre_install(self)
@@ -956,8 +988,9 @@ class Package(object):
                          self.prefix, wrap=True)
             raise
 
-        # note: PARENT of the build process adds the new package to
+        # Note: PARENT of the build process adds the new package to
         # the database, so that we don't need to re-read from file.
+        # Note: add implicitly acquires a write-lock
         spack.installed_db.add(self.spec, self.prefix)
 
 
