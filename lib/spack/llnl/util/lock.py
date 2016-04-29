@@ -28,6 +28,8 @@ import errno
 import time
 import socket
 
+import llnl.util.tty as tty
+
 # Default timeout in seconds, after which locks will raise exceptions.
 _default_timeout = 60
 
@@ -83,7 +85,7 @@ class Lock(object):
         be masquerading as write locks, but this removes either.
 
         """
-        fcntl.lockf(self._fd,fcntl.LOCK_UN)
+        fcntl.lockf(self._fd, fcntl.LOCK_UN)
         os.close(self._fd)
         self._fd = None
 
@@ -100,6 +102,7 @@ class Lock(object):
 
         """
         if self._reads == 0 and self._writes == 0:
+            tty.debug('READ LOCK : {0._file_path} [Acquiring]'.format(self))
             self._lock(fcntl.LOCK_SH, timeout)   # can raise LockError.
             self._reads += 1
             return True
@@ -120,6 +123,7 @@ class Lock(object):
 
         """
         if self._writes == 0:
+            tty.debug('WRITE LOCK : {0._file_path} [Acquiring]'.format(self))
             self._lock(fcntl.LOCK_EX, timeout)   # can raise LockError.
             self._writes += 1
             return True
@@ -141,6 +145,7 @@ class Lock(object):
         assert self._reads > 0
 
         if self._reads == 1 and self._writes == 0:
+            tty.debug('READ LOCK : {0._file_path} [Released]'.format(self))
             self._unlock()      # can raise LockError.
             self._reads -= 1
             return True
@@ -162,6 +167,7 @@ class Lock(object):
         assert self._writes > 0
 
         if self._writes == 1 and self._reads == 0:
+            tty.debug('WRITE LOCK : {0._file_path} [Released]'.format(self))
             self._unlock()      # can raise LockError.
             self._writes -= 1
             return True

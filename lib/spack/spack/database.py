@@ -33,7 +33,7 @@ The database serves two purposes:
   2. It will allow us to track external installations as well as lost
      packages and their dependencies.
 
-Prior ot the implementation of this store, a direcotry layout served
+Prior ot the implementation of this store, a directory layout served
 as the authoritative database of packages in Spack.  This module
 provides a cache and a sanity checking mechanism for what is in the
 filesystem.
@@ -271,11 +271,11 @@ class Database(object):
 
                 # Insert the brand new spec in the database.  Each
                 # spec has its own copies of its dependency specs.
-                # TODO: would a more immmutable spec implementation simplify this?
+                # TODO: would a more immutable spec implementation simplify this?
                 data[hash_key] = InstallRecord.from_dict(spec, rec)
 
             except Exception as e:
-                tty.warn("Invalid database reecord:",
+                tty.warn("Invalid database record:",
                          "file:  %s" % self._index_path,
                          "hash:  %s" % hash_key,
                          "cause: %s" % str(e))
