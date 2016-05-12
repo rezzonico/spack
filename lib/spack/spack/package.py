@@ -1002,8 +1002,8 @@ class Package(object):
                     install(env_path, env_install_path)
                     dump_packages(self.spec, packages_dir)
 
-                     # Run post install hooks before build stage is removed.
-                     spack.hooks.post_install(self)
+                    # Run post install hooks before build stage is removed.
+                    spack.hooks.post_install(self)
 
             # Stop timer.
             self._total_time = time.time() - start_time
