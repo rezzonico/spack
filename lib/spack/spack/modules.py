@@ -554,13 +554,16 @@ class TclModule(EnvModule):
             yield line
 
 # To construct an arbitrary hierarchy of module files:
-# 1. Parse the configuration file and check that all the items in hierarchical_scheme are indeed virtual packages
+# 1. Parse the configuration file and check that all the items in
+#    hierarchical_scheme are indeed virtual packages
 #    This needs to be done only once at start-up
 # 2. Order the stack as `hierarchical_scheme + ['mpi, 'compiler']
-# 3. Check which of the services are provided by the package -> may be more than one
-# 4. Check which of the services are needed by the package -> this determines where to write the module file
-# 5. For each combination of services in which we have at least one provider here add the appropriate conditional
-#    MODULEPATH modifications
+# 3. Check which of the services are provided by the package
+#    -> may be more than one
+# 4. Check which of the services are needed by the package
+#    -> this determines where to write the module file
+# 5. For each combination of services in which we have at least one provider
+#    here add the appropriate conditional MODULEPATH modifications
 
 
 class LmodModule(EnvModule):
@@ -586,9 +589,11 @@ class LmodModule(EnvModule):
 
     path_part = join_path('{token.name}', '{token.version}')
 
-    # TODO : Check that extra tokens specified in configuration file are actually virtual dependencies
+    # TODO : Check that extra tokens specified in configuration file
+    # TODO : are actually virtual dependencies
     configuration = CONFIGURATION.get('lmod', {})
-    hierarchy_tokens = configuration.get('hierarchical_scheme', []) + ['mpi', 'compiler']
+    hierarchy_tokens = configuration.get('hierarchical_scheme', [])
+    hierarchy_tokens = hierarchy_tokens + ['mpi', 'compiler']
 
     def __init__(self, spec=None):
         super(LmodModule, self).__init__(spec)
@@ -596,15 +601,17 @@ class LmodModule(EnvModule):
         self.modules_root = join_path(LmodModule.path, self.spec.architecture)
         # Retrieve core compilers
         self.core_compilers = self.configuration.get('core_compilers', [])
-        # Keep track of the requirements that this package has in terms of virtual packages
+        # Keep track of the requirements that this package has in terms
+        # of virtual packages
         # that participate in the hierarchical structure
-        self.requires = {
-            'compiler': self.spec.compiler
-        }
-        for x in self.hierarchy_tokens:  # For each virtual dependency in the hierarchy
-            if x in self.spec and not self.spec.package.provides(x):  # if I depend on it
+        self.requires = {'compiler': self.spec.compiler}
+        # For each virtual dependency in the hierarchy
+        for x in self.hierarchy_tokens:
+            if x in self.spec and not self.spec.package.provides(
+                    x):  # if I depend on it
                 self.requires[x] = self.spec[x]  # record the actual provider
-        # Check what are the services I need (this will determine where the module file will be written)
+        # Check what are the services I need (this will determine where the
+        # module file will be written)
         self.substitutions = {}
         self.substitutions.update(self.requires)
         # TODO : complete substitutions
@@ -633,7 +640,8 @@ class LmodModule(EnvModule):
 
     def _hierarchy_to_be_provided(self):
         """
-        Filters a list of hierarchy tokens and yields only the one that we need to provide
+        Filters a list of hierarchy tokens and yields only the one that we
+        need to provide
         """
         for item in self._hierarchy_token_combinations():
             if any(x in self.provides for x in item):
@@ -646,14 +654,17 @@ class LmodModule(EnvModule):
 
     @property
     def file_name(self):
-        parts = [self.token_to_path(x, self.requires[x]) for x in self.hierarchy_tokens if x in self.requires]
+        parts = [self.token_to_path(x, self.requires[x])
+                 for x in self.hierarchy_tokens if x in self.requires]
         hierarchy_name = join_path(*parts)
-        fullname = join_path(self.modules_root, hierarchy_name, self.use_name + '.lua')
+        fullname = join_path(self.modules_root, hierarchy_name,
+                             self.use_name + '.lua')
         return fullname
 
     @property
     def use_name(self):
-        return self.token_to_path('', self.spec) + '-' + self.spec.dag_hash(length=6)
+        return self.token_to_path('', self.spec) + '-' + self.spec.dag_hash(
+            length=6)
 
     def modulepath_modifications(self):
         # What is available is what we require plus what we provide
@@ -661,7 +672,8 @@ class LmodModule(EnvModule):
         available = {}
         available.update(self.requires)
         available.update(self.provides)
-        available_parts = [self.token_to_path(x, available[x]) for x in self.hierarchy_tokens if x in available]
+        available_parts = [self.token_to_path(x, available[x])
+                           for x in self.hierarchy_tokens if x in available]
         # Missing parts
         missing = [x for x in self.hierarchy_tokens if x not in available]
         # Direct path we provide on top of compilers
@@ -674,13 +686,15 @@ class LmodModule(EnvModule):
         def local_variable(x):
             lower, upper = x.lower(), x.upper()
             fmt = 'local {lower}_name = os.getenv("LMOD_{upper}_NAME")\n'
-            fmt += 'local {lower}_version = os.getenv("LMOD_{upper}_VERSION")\n'
+            fmt += 'local {lower}_version = os.getenv("LMOD_{upper}_VERSION")\n'  # NOQA: ignore=501
             return fmt.format(lower=lower, upper=upper)
 
         def set_variables_for_service(env, x):
             upper = x.upper()
-            env.set('LMOD_{upper}_NAME'.format(upper=upper), self.provides[x].name)
-            env.set('LMOD_{upper}_VERSION'.format(upper=upper), self.provides[x].version)
+            env.set('LMOD_{upper}_NAME'.format(upper=upper),
+                    self.provides[x].name)
+            env.set('LMOD_{upper}_VERSION'.format(upper=upper),
+                    self.provides[x].version)
 
         def conditional_modulepath_modifications(item):
             entry = 'if '
@@ -689,12 +703,15 @@ class LmodModule(EnvModule):
                 if x in missing:
                     needed.append('{x}_name '.format(x=x))
             entry += 'and '.join(needed) + 'then\n'
-            entry += '  local t = pathJoin("{root}"'.format(root=self.modules_root)
+            entry += '  local t = pathJoin("{root}"'.format(
+                root=self.modules_root)
             for x in item:
                 if x in missing:
-                    entry += ', {lower}_name, {lower}_version'.format(lower=x.lower())
+                    entry += ', {lower}_name, {lower}_version'.format(
+                        lower=x.lower())
                 else:
-                    entry += ', "{x}"'.format(x=self.token_to_path(x, available[x]))
+                    entry += ', "{x}"'.format(
+                        x=self.token_to_path(x, available[x]))
             entry += ')\n'
             entry += '  prepend_path("MODULEPATH", t)\n'
             entry += 'end\n\n'
@@ -707,7 +724,9 @@ class LmodModule(EnvModule):
                 entry += local_variable(x)
             entry += '\n'
             # Conditional modifications
-            conditionals = [x for x in self._hierarchy_to_be_provided() if any(t in missing for t in x)]
+            conditionals = [x
+                            for x in self._hierarchy_to_be_provided()
+                            if any(t in missing for t in x)]
             for item in conditionals:
                 entry += conditional_modulepath_modifications(item)
 
@@ -722,10 +741,11 @@ class LmodModule(EnvModule):
 
     @property
     def header(self):
+        timestamp = datetime.datetime.now()
         # Header as in
         # https://www.tacc.utexas.edu/research-development/tacc-projects/lmod/advanced-user-guide/more-about-writing-module-files
         header = "-- -*- lua -*-\n"
-        header += '-- Module file created by spack (https://github.com/LLNL/spack) on %s\n' % datetime.datetime.now()
+        header += '-- Module file created by spack (https://github.com/LLNL/spack) on %s\n' % timestamp  # NOQA: ignore=E501
         header += '--\n'
         header += '-- %s\n' % self.spec.short_spec
         header += '--\n'
@@ -733,7 +753,8 @@ class LmodModule(EnvModule):
         # Short description -> whatis()
         if self.short_description:
             header += "whatis([[Name : {name}]])\n".format(name=self.spec.name)
-            header += "whatis([[Version : {version}]])\n".format(version=self.spec.version)
+            header += "whatis([[Version : {version}]])\n".format(
+                version=self.spec.version)
 
         # Long description -> help()
         if self.long_description:

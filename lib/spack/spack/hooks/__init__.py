@@ -41,9 +41,11 @@
    features.
 """
 import imp
-from llnl.util.lang import memoized, list_modules
-from llnl.util.filesystem import join_path
+
 import spack
+from llnl.util.filesystem import join_path
+from llnl.util.lang import memoized, list_modules
+
 
 @memoized
 def all_hook_modules():
@@ -68,12 +70,11 @@ class HookRunner(object):
                 if hasattr(hook, '__call__'):
                     hook(pkg)
 
-
 #
 # Define some functions that can be called to fire off hooks.
 #
-pre_install    = HookRunner('pre_install')
-post_install   = HookRunner('post_install')
+pre_install = HookRunner('pre_install')
+post_install = HookRunner('post_install')
 
-pre_uninstall  = HookRunner('pre_uninstall')
+pre_uninstall = HookRunner('pre_uninstall')
 post_uninstall = HookRunner('post_uninstall')
