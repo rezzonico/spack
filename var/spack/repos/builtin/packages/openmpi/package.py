@@ -1,3 +1,27 @@
+##############################################################################
+# Copyright (c) 2013-2016, Lawrence Livermore National Security, LLC.
+# Produced at the Lawrence Livermore National Laboratory.
+#
+# This file is part of Spack.
+# Created by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
+# LLNL-CODE-647188
+#
+# For details, see https://github.com/llnl/spack
+# Please also see the LICENSE file for our notice and the LGPL.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License (as
+# published by the Free Software Foundation) version 2.1, February 1999.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
+# conditions of the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+##############################################################################
 import os
 
 from spack import *
@@ -29,6 +53,7 @@ class Openmpi(Package):
 
     variant('psm', default=False, description='Build support for the PSM library.')
     variant('psm2', default=False, description='Build support for the Intel PSM2 library.')
+    variant('pmi', default=False, description='Build support for PMI-based launchers')
     variant('verbs', default=False, description='Build support for OpenFabrics verbs.')
     variant('mxm', default=False, description='Build Mellanox Messaging support')
 
@@ -38,7 +63,6 @@ class Openmpi(Package):
     variant('tm', default=False, description='Build TM (Torque, PBSPro, and compatible) support')
     variant('slurm', default=False, description='Build SLURM scheduler component')
 
-    variant('pmi', default=False, description='Build PMI support, optionally adding DIR to the search path')
     variant('sqlite3', default=False, description='Build sqlite3 support')
 
     # TODO : support for CUDA is missing
@@ -47,6 +71,7 @@ class Openmpi(Package):
     provides('mpi@:3.0', when='@1.7.5:')
 
     depends_on('hwloc')
+    depends_on('sqlite', when='+sqlite3')
 
     def url_for_version(self, version):
         return "http://www.open-mpi.org/software/ompi/v%s/downloads/openmpi-%s.tar.bz2" % (version.up_to(2), version)
@@ -57,6 +82,12 @@ class Openmpi(Package):
         spack_env.set('OMPI_CXX', spack_cxx)
         spack_env.set('OMPI_FC', spack_fc)
         spack_env.set('OMPI_F77', spack_f77)
+
+    def setup_dependent_package(self, module, dep_spec):
+        self.spec.mpicc  = join_path(self.prefix.bin, 'mpicc')
+        self.spec.mpicxx = join_path(self.prefix.bin, 'mpic++')
+        self.spec.mpifc  = join_path(self.prefix.bin, 'mpif90')
+        self.spec.mpif77 = join_path(self.prefix.bin, 'mpif77')
 
     @property
     def verbs(self):
