@@ -10,3 +10,5 @@
 /share/spack/modules
 /share/spack/lmod
 /TAGS
+/htmlcov
+.coverage
