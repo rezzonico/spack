@@ -38,12 +38,11 @@ _sleep_time = 1e-5
 
 
 class Lock(object):
-    def __init__(self,file_path):
+    def __init__(self, file_path):
         self._file_path = file_path
         self._fd = None
         self._reads = 0
         self._writes = 0
-
 
     def _lock(self, op, timeout):
         """This takes a lock using POSIX locks (``fnctl.lockf``).
@@ -65,7 +64,8 @@ class Lock(object):
 
                 fcntl.lockf(self._fd, op | fcntl.LOCK_NB)
                 if op == fcntl.LOCK_EX:
-                    os.write(self._fd, "pid=%s,host=%s" % (os.getpid(), socket.getfqdn()))
+                    os.write(self._fd, "pid=%s,host=%s" %
+                             (os.getpid(), socket.getfqdn()))
                 return
 
             except IOError as error:
@@ -77,7 +77,6 @@ class Lock(object):
 
         raise LockError("Timed out waiting for lock.")
 
-
     def _unlock(self):
         """Releases a lock using POSIX locks (``fcntl.lockf``)
 
@@ -88,7 +87,6 @@ class Lock(object):
         fcntl.lockf(self._fd, fcntl.LOCK_UN)
         os.close(self._fd)
         self._fd = None
-
 
     def acquire_read(self, timeout=_default_timeout):
         """Acquires a recursive, shared lock for reading.
@@ -103,13 +101,12 @@ class Lock(object):
         """
         if self._reads == 0 and self._writes == 0:
             tty.debug('READ LOCK : {0._file_path} [Acquiring]'.format(self))
-            self._lock(fcntl.LOCK_SH, timeout)   # can raise LockError.
+            self._lock(fcntl.LOCK_SH, timeout)  # can raise LockError.
             self._reads += 1
             return True
         else:
             self._reads += 1
             return False
-
 
     def acquire_write(self, timeout=_default_timeout):
         """Acquires a recursive, exclusive lock for writing.
@@ -124,13 +121,12 @@ class Lock(object):
         """
         if self._writes == 0:
             tty.debug('WRITE LOCK : {0._file_path} [Acquiring]'.format(self))
-            self._lock(fcntl.LOCK_EX, timeout)   # can raise LockError.
+            self._lock(fcntl.LOCK_EX, timeout)  # can raise LockError.
             self._writes += 1
             return True
         else:
             self._writes += 1
             return False
-
 
     def release_read(self):
         """Releases a read lock.
@@ -146,13 +142,12 @@ class Lock(object):
 
         if self._reads == 1 and self._writes == 0:
             tty.debug('READ LOCK : {0._file_path} [Released]'.format(self))
-            self._unlock()      # can raise LockError.
+            self._unlock()  # can raise LockError.
             self._reads -= 1
             return True
         else:
             self._reads -= 1
             return False
-
 
     def release_write(self):
         """Releases a write lock.
@@ -168,7 +163,7 @@ class Lock(object):
 
         if self._writes == 1 and self._reads == 0:
             tty.debug('WRITE LOCK : {0._file_path} [Released]'.format(self))
-            self._unlock()      # can raise LockError.
+            self._unlock()  # can raise LockError.
             self._writes -= 1
             return True
         else:

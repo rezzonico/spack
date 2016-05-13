@@ -33,13 +33,13 @@ Homebrew makes it very easy to create packages.  For a complete
 rundown on spack and how it differs from homebrew, look at the
 README.
 """
+import contextlib
 import os
 import re
 import textwrap
 import time
-import contextlib
-import glob
 
+import llnl.util.lock
 import llnl.util.tty as tty
 import spack
 import spack.build_environment
@@ -63,7 +63,6 @@ from spack.util.environment import dump_environment
 from spack.util.executable import ProcessError
 from spack.version import *
 from urlparse import urlparse
-import llnl.util.lock
 
 """Allowed URL schemes for spack packages."""
 _ALLOWED_URL_SCHEMES = ["http", "https", "ftp", "file", "git"]
@@ -325,7 +324,8 @@ class Package(object):
     def __init__(self, spec):
         # this determines how the package should be built.
         self.spec = spec
-        self._prefix_lock = None # Lock on the prefix shared resource. Will be set in prefix property
+        # Lock on the prefix shared resource. Will be set in prefix property
+        self._prefix_lock = None
 
         # Name of package is the name of its module, without the
         # containing module names.
@@ -349,7 +349,8 @@ class Package(object):
 
         # Version-ize the keys in versions dict
         try:
-            self.versions = dict((Version(v), h) for v,h in self.versions.items())
+            self.versions = dict((Version(v), h)
+                                 for v, h in self.versions.items())
         except ValueError as e:
             raise ValueError("In package %s: %s" % (self.name, e.message))
 
@@ -923,7 +924,8 @@ class Package(object):
         # Ensure package is not already installed
         with self._prefix_read_lock():
             if spack.install_layout.check_installed(self.spec):
-                tty.msg("%s is already installed in %s" % (self.name, self.prefix))
+                tty.msg("%s is already installed in %s" %
+                        (self.name, self.prefix))
                 return
 
         tty.msg("Installing %s" % self.name)
@@ -1002,8 +1004,8 @@ class Package(object):
                     install(env_path, env_install_path)
                     dump_packages(self.spec, packages_dir)
 
-                     # Run post install hooks before build stage is removed.
-                     spack.hooks.post_install(self)
+                    # Run post install hooks before build stage is removed.
+                    spack.hooks.post_install(self)
 
             # Stop timer.
             self._total_time = time.time() - start_time
@@ -1387,9 +1389,11 @@ class Package(object):
     def rpath(self):
         """Get the rpath this package links with, as a list of paths."""
         rpaths = [self.prefix.lib, self.prefix.lib64]
-        rpaths.extend(d.prefix.lib for d in self.spec.traverse(root=False)
+        rpaths.extend(d.prefix.lib
+                      for d in self.spec.traverse(root=False)
                       if os.path.isdir(d.prefix.lib))
-        rpaths.extend(d.prefix.lib64 for d in self.spec.traverse(root=False)
+        rpaths.extend(d.prefix.lib64
+                      for d in self.spec.traverse(root=False)
                       if os.path.isdir(d.prefix.lib64))
         return rpaths
 

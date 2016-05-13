@@ -53,37 +53,54 @@ def ask_for_confirmation(message):
 
 def setup_parser(subparser):
     subparser.add_argument(
-        '-f', '--force', action='store_true', dest='force',
+        '-f',
+        '--force',
+        action='store_true',
+        dest='force',
         help="Remove regardless of whether other packages depend on this one.")
     subparser.add_argument(
-        '-a', '--all', action='store_true', dest='all',
+        '-a',
+        '--all',
+        action='store_true',
+        dest='all',
         help="USE CAREFULLY. Remove ALL installed packages that match each " +
-             "supplied spec. i.e., if you say uninstall libelf, ALL versions of " +
-             "libelf are uninstalled. This is both useful and dangerous, like rm -r.")
+        "supplied spec. i.e., if you say uninstall libelf, ALL versions of " +
+        "libelf are uninstalled. This is both useful and dangerous, " +
+        "like rm -r.")
     subparser.add_argument(
-        '-d', '--dependents', action='store_true', dest='dependents',
-        help='Also uninstall any packages that depend on the ones given via command line.'
+        '-d',
+        '--dependents',
+        action='store_true',
+        dest='dependents',
+        help='Also uninstall any packages that depend on the ones given via command line.'  # NOQA: ignore=E501
     )
     subparser.add_argument(
-        '-y', '--yes-to-all', action='store_true', dest='yes_to_all',
-        help='Assume "yes" is the answer to every confirmation asked to the user.'
-
+        '-y',
+        '--yes-to-all',
+        action='store_true',
+        dest='yes_to_all',
+        help='Assume "yes" is the answer to every confirmation asked to the user.'  # NOQA: ignore=E501
     )
-    subparser.add_argument('packages', nargs=argparse.REMAINDER, help="specs of packages to uninstall")
+    subparser.add_argument('packages',
+                           nargs=argparse.REMAINDER,
+                           help="specs of packages to uninstall")
 
 
 def concretize_specs(specs, allow_multiple_matches=False, force=False):
     """
-    Returns a list of specs matching the non necessarily concretized specs given from cli
+    Returns a list of specs matching the non necessarily concretized
+    specs given from cli
 
     Args:
         specs: list of specs to be matched against installed packages
-        allow_multiple_matches : boolean (if True multiple matches for each item in specs are admitted)
+        allow_multiple_matches : boolean (if True multiple matches for each
+        item in specs are admitted)
 
     Return:
         list of specs
     """
-    specs_from_cli = []  # List of specs that match expressions given via command line
+    # List of specs that match expressions given via command line
+    specs_from_cli = []
     has_errors = False
     for spec in specs:
         matching = spack.installed_db.query(spec)
@@ -110,7 +127,8 @@ def concretize_specs(specs, allow_multiple_matches=False, force=False):
 
 def installed_dependents(specs):
     """
-    Returns a dictionary that maps a spec with a list of its installed dependents
+    Returns a dictionary that maps a spec with a list of its installed
+    dependents
 
     Args:
         specs: list of specs to be checked for dependents
@@ -140,7 +158,7 @@ def do_uninstall(specs, force):
         try:
             # should work if package is known to spack
             packages.append(item.package)
-        except spack.repository.UnknownPackageError as e:
+        except spack.repository.UnknownPackageError:
             # The package.py file has gone away -- but still
             # want to uninstall.
             spack.Package(item).do_uninstall(force=True)
@@ -161,14 +179,16 @@ def uninstall(parser, args):
 
     specs = spack.cmd.parse_specs(args.packages)
     # Gets the list of installed specs that match the ones give via cli
-    uninstall_list = concretize_specs(specs, args.all, args.force)  # takes care of '-a' is given in the cli
+    uninstall_list = concretize_specs(
+        specs, args.all, args.force)  # takes care of '-a' is given in the cli
     dependent_list = installed_dependents(uninstall_list)  # takes care of '-d'
 
     # Process dependent_list and update uninstall_list
     has_error = False
     if dependent_list and not args.dependents and not args.force:
         for spec, lst in dependent_list.items():
-            tty.error("Will not uninstall %s" % spec.format("$_$@$%@$#", color=True))
+            tty.error("Will not uninstall %s" % spec.format("$_$@$%@$#",
+                                                            color=True))
             print('')
             print("The following packages depend on it:")
             display_specs(lst, long=True)
@@ -180,7 +200,7 @@ def uninstall(parser, args):
         uninstall_list = list(set(uninstall_list))
 
     if has_error:
-        tty.die('You can use spack uninstall --dependents to uninstall these dependencies as well')
+        tty.die('You can use spack uninstall --dependents to uninstall these dependencies as well')  # NOQA: ignore=E501
 
     if not args.yes_to_all:
         tty.msg("The following packages will be uninstalled : ")

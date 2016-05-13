@@ -40,21 +40,18 @@ filesystem.
 
 """
 import os
-import time
 import socket
 
-import yaml
-from yaml.error import MarkedYAMLError, YAMLError
-
 import llnl.util.tty as tty
+import spack.spec
+import yaml
 from llnl.util.filesystem import *
 from llnl.util.lock import *
-
-import spack.spec
-from spack.version import Version
-from spack.spec import Spec
 from spack.error import SpackError
 from spack.repository import UnknownPackageError
+from spack.spec import Spec
+from spack.version import Version
+from yaml.error import MarkedYAMLError, YAMLError
 
 # DB goes in this directory underneath the root
 _db_dirname = '.spack-db'
@@ -69,10 +66,12 @@ _db_lock_timeout = 60
 def _autospec(function):
     """Decorator that automatically converts the argument of a single-arg
        function to a Spec."""
+
     def converter(self, spec_like, *args, **kwargs):
         if not isinstance(spec_like, spack.spec.Spec):
             spec_like = spack.spec.Spec(spec_like)
         return function(self, spec_like, *args, **kwargs)
+
     return converter
 
 
@@ -92,6 +91,7 @@ class InstallRecord(object):
     dependents left.
 
     """
+
     def __init__(self, spec, path, installed, ref_count=0):
         self.spec = spec
         self.path = str(path)
@@ -99,10 +99,10 @@ class InstallRecord(object):
         self.ref_count = ref_count
 
     def to_dict(self):
-        return { 'spec'      : self.spec.to_node_dict(),
-                 'path'      : self.path,
-                 'installed' : self.installed,
-                 'ref_count' : self.ref_count }
+        return {'spec': self.spec.to_node_dict(),
+                'path': self.path,
+                'installed': self.installed,
+                'ref_count': self.ref_count}
 
     @classmethod
     def from_dict(cls, spec, dictionary):
@@ -142,7 +142,7 @@ class Database(object):
 
         # Set up layout of database files within the db dir
         self._index_path = join_path(self._db_dir, 'index.yaml')
-        self._lock_path  = join_path(self._db_dir, 'lock')
+        self._lock_path = join_path(self._db_dir, 'lock')
 
         # Create needed directories and files
         if not os.path.exists(self._db_dir):
@@ -155,16 +155,13 @@ class Database(object):
         self.lock = Lock(self._lock_path)
         self._data = {}
 
-
     def write_transaction(self, timeout=_db_lock_timeout):
         """Get a write lock context manager for use in a `with` block."""
         return WriteTransaction(self, self._read, self._write, timeout)
 
-
     def read_transaction(self, timeout=_db_lock_timeout):
         """Get a read lock context manager for use in a `with` block."""
         return ReadTransaction(self, self._read, None, timeout)
-
 
     def _write_to_yaml(self, stream):
         """Write out the databsae to a YAML file.
@@ -181,9 +178,9 @@ class Database(object):
         # different paths, it can't differentiate.
         # TODO: fix this before we support multiple install locations.
         database = {
-            'database' : {
-                'installs' : installs,
-                'version' : str(_db_version)
+            'database': {
+                'installs': installs,
+                'version': str(_db_version)
             }
         }
 
@@ -191,7 +188,6 @@ class Database(object):
             return yaml.dump(database, stream=stream, default_flow_style=False)
         except YAMLError as e:
             raise SpackYAMLError("error writing YAML database:", str(e))
-
 
     def _read_spec_from_yaml(self, hash_key, installs, parent_key=None):
         """Recursively construct a spec from a hash in a YAML database.
@@ -217,7 +213,6 @@ class Database(object):
         spec._mark_concrete()
         return spec
 
-
     def _read_from_yaml(self, stream):
         """
         Fill database from YAML, do not maintain old data
@@ -239,14 +234,15 @@ class Database(object):
             return
 
         def check(cond, msg):
-            if not cond: raise CorruptDatabaseError(self._index_path, msg)
+            if not cond:
+                raise CorruptDatabaseError(self._index_path, msg)
 
         check('database' in yfile, "No 'database' attribute in YAML.")
 
         # High-level file checks
         db = yfile['database']
         check('installs' in db, "No 'installs' in YAML DB.")
-        check('version'  in db, "No 'version' in YAML DB.")
+        check('version' in db, "No 'version' in YAML DB.")
 
         # TODO: better version checking semantics.
         version = Version(db['version'])
@@ -265,24 +261,24 @@ class Database(object):
                 # hashes are the same.
                 spec_hash = spec.dag_hash()
                 if not spec_hash == hash_key:
-                    tty.warn("Hash mismatch in database: %s -> spec with hash %s"
-                             % (hash_key, spec_hash))
-                    continue    # TODO: is skipping the right thing to do?
+                    tty.warn(
+                        "Hash mismatch in database: %s -> spec with hash %s" %
+                        (hash_key, spec_hash))
+                    continue  # TODO: is skipping the right thing to do?
 
                 # Insert the brand new spec in the database.  Each
                 # spec has its own copies of its dependency specs.
-                # TODO: would a more immutable spec implementation simplify this?
+                # TODO : would a more immutable spec
+                # TODO : implementation simplify this?
                 data[hash_key] = InstallRecord.from_dict(spec, rec)
 
             except Exception as e:
                 tty.warn("Invalid database record:",
                          "file:  %s" % self._index_path,
-                         "hash:  %s" % hash_key,
-                         "cause: %s" % str(e))
+                         "hash:  %s" % hash_key, "cause: %s" % str(e))
                 raise
 
         self._data = data
-
 
     def reindex(self, directory_layout):
         """Build database index from scratch based from a directory layout.
@@ -308,7 +304,6 @@ class Database(object):
                 self._data = old_data
                 raise
 
-
     def _check_ref_counts(self):
         """Ensure consistency of reference counts in the DB.
 
@@ -330,9 +325,8 @@ class Database(object):
             found = rec.ref_count
             if not expected == found:
                 raise AssertionError(
-                    "Invalid ref_count: %s: %d (expected %d), in DB %s"
-                    % (key, found, expected, self._index_path))
-
+                    "Invalid ref_count: %s: %d (expected %d), in DB %s" %
+                    (key, found, expected, self._index_path))
 
     def _write(self):
         """Write the in-memory database index to its file path.
@@ -340,8 +334,8 @@ class Database(object):
         Does no locking.
 
         """
-        temp_file = self._index_path + (
-            '.%s.%s.temp' % (socket.getfqdn(), os.getpid()))
+        temp_file = self._index_path + ('.%s.%s.temp' %
+                                        (socket.getfqdn(), os.getpid()))
 
         # Write a temporary database file them move it into place
         try:
@@ -353,7 +347,6 @@ class Database(object):
             if os.path.exists(temp_file):
                 os.remove(temp_file)
             raise
-
 
     def _read(self):
         """Re-read Database from the data in the set location.
@@ -368,7 +361,6 @@ class Database(object):
             # The file doesn't exist, try to traverse the directory.
             # reindex() takes its own write lock, so no lock here.
             self.reindex(spack.install_layout)
-
 
     def _add(self, spec, path, directory_layout=None):
         """Add an install record for spec at path to the database.
@@ -395,7 +387,6 @@ class Database(object):
             self._data[key] = InstallRecord(spec, path, True)
             for dep in spec.dependencies.values():
                 self._increment_ref_count(dep, directory_layout)
-
 
     def _increment_ref_count(self, spec, directory_layout=None):
         """Recursively examine dependencies and update their DB entries."""
@@ -426,28 +417,25 @@ class Database(object):
         with self.write_transaction():
             self._add(spec, path)
 
-
     def _get_matching_spec_key(self, spec, **kwargs):
         """Get the exact spec OR get a single spec that matches."""
         key = spec.dag_hash()
-        if not key in self._data:
+        if key not in self._data:
             match = self.query_one(spec, **kwargs)
             if match:
                 return match.dag_hash()
             raise KeyError("No such spec in database! %s" % spec)
         return key
 
-
     @_autospec
     def get_record(self, spec, **kwargs):
         key = self._get_matching_spec_key(spec, **kwargs)
         return self._data[key]
 
-
     def _decrement_ref_count(self, spec):
         key = spec.dag_hash()
 
-        if not key in self._data:
+        if key not in self._data:
             # TODO: print something here?  DB is corrupt, but
             # not much we can do.
             return
@@ -459,7 +447,6 @@ class Database(object):
             del self._data[key]
             for dep in spec.dependencies.values():
                 self._decrement_ref_count(dep)
-
 
     def _remove(self, spec):
         """Non-locking version of remove(); does real work.
@@ -479,7 +466,6 @@ class Database(object):
         # query spec was passed in.
         return rec.spec
 
-
     @_autospec
     def remove(self, spec):
         """Removes a spec from the database.  To be called on uninstall.
@@ -496,7 +482,6 @@ class Database(object):
         with self.write_transaction():
             return self._remove(spec)
 
-
     @_autospec
     def installed_extensions_for(self, extendee_spec):
         """
@@ -507,11 +492,10 @@ class Database(object):
             try:
                 if s.package.extends(extendee_spec):
                     yield s.package
-            except UnknownPackageError as e:
+            except UnknownPackageError:
                 continue
             # skips unknown packages
             # TODO: conditional way to do this instead of catching exceptions
-
 
     def query(self, query_spec=any, known=any, installed=True):
         """Run a query on the database.
@@ -553,13 +537,13 @@ class Database(object):
             for key, rec in self._data.items():
                 if installed is not any and rec.installed != installed:
                     continue
-                if known is not any and spack.repo.exists(rec.spec.name) != known:
+                if known is not any and spack.repo.exists(
+                        rec.spec.name) != known:
                     continue
                 if query_spec is any or rec.spec.satisfies(query_spec):
                     results.append(rec.spec)
 
             return sorted(results)
-
 
     def query_one(self, query_spec, known=any, installed=True):
         """Query for exactly one spec that matches the query spec.
@@ -572,10 +556,9 @@ class Database(object):
         assert len(concrete_specs) <= 1
         return concrete_specs[0] if concrete_specs else None
 
-
     def missing(self, spec):
         with self.read_transaction():
-            key =  spec.dag_hash()
+            key = spec.dag_hash()
             return key in self._data and not self._data[key].installed
 
 
@@ -587,7 +570,11 @@ class _Transaction(object):
 
     Timeout for lock is customizable.
     """
-    def __init__(self, db, acquire_fn=None, release_fn=None,
+
+    def __init__(self,
+                 db,
+                 acquire_fn=None,
+                 release_fn=None,
                  timeout=_db_lock_timeout):
         self._db = db
         self._timeout = timeout
@@ -622,11 +609,11 @@ class WriteTransaction(_Transaction):
 class CorruptDatabaseError(SpackError):
     def __init__(self, path, msg=''):
         super(CorruptDatabaseError, self).__init__(
-            "Spack database is corrupt: %s.  %s" %(path, msg))
+            "Spack database is corrupt: %s.  %s" % (path, msg))
 
 
 class InvalidDatabaseVersionError(SpackError):
     def __init__(self, expected, found):
         super(InvalidDatabaseVersionError, self).__init__(
-            "Expected database version %s but found version %s"
-            % (expected, found))
+            "Expected database version %s but found version %s" %
+            (expected, found))
