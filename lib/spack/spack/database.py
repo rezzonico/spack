@@ -195,7 +195,7 @@ class Database(object):
         Does not do any locking.
         """
         if hash_key not in installs:
-            parent = read_spec(installs[parent_key]['path'])
+            read_spec(installs[parent_key]['path'])
 
         spec_dict = installs[hash_key]['spec']
 
