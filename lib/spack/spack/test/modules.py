@@ -48,60 +48,58 @@ def mock_open(filename, mode):
         FILE_REGISTRY[filename] = handle.getvalue()
         handle.close()
 
-
-configuration_autoload_direct = {
-    'enable': ['tcl'],
-    'tcl': {
-        'all': {
-            'autoload': 'direct'
-        }
-    }
-}
-
-configuration_autoload_all = {
-    'enable': ['tcl'],
-    'tcl': {
-        'all': {
-            'autoload': 'all'
-        }
-    }
-}
-
-configuration_alter_environment = {
-    'enable': ['tcl'],
-    'tcl': {
-        'all': {
-            'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
-        },
-        '=x86-linux': {
-            'environment': {'set': {'FOO': 'foo'},
-                            'unset': ['BAR']}
-        }
-    }
-}
-
-configuration_blacklist = {
-    'enable': ['tcl'],
-    'tcl': {
-        'blacklist': ['callpath'],
-        'all': {
-            'autoload': 'direct'
-        }
-    }
-}
-
-configuration_conflicts = {
-    'enable': ['tcl'],
-    'tcl': {
-        'naming_scheme': '{name}/{version}-{compiler.name}',
-        'all': {
-            'conflict': ['{name}', 'intel/14.0.1']
-        }
-    }
-}
-
-
 class TclTests(MockPackagesTest):
+    configuration_autoload_direct = {
+        'enable': ['tcl'],
+        'tcl': {
+            'all': {
+                'autoload': 'direct'
+            }
+        }
+    }
+
+    configuration_autoload_all = {
+        'enable': ['tcl'],
+        'tcl': {
+            'all': {
+                'autoload': 'all'
+            }
+        }
+    }
+
+    configuration_alter_environment = {
+        'enable': ['tcl'],
+        'tcl': {
+            'all': {
+                'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
+            },
+            '=x86-linux': {
+                'environment': {'set': {'FOO': 'foo'},
+                                'unset': ['BAR']}
+            }
+        }
+    }
+
+    configuration_blacklist = {
+        'enable': ['tcl'],
+        'tcl': {
+            'blacklist': ['callpath'],
+            'all': {
+                'autoload': 'direct'
+            }
+        }
+    }
+
+    configuration_conflicts = {
+        'enable': ['tcl'],
+        'tcl': {
+            'naming_scheme': '{name}/{version}-{compiler.name}',
+            'all': {
+                'conflict': ['{name}', 'intel/14.0.1']
+            }
+        }
+    }
+
     def setUp(self):
         super(TclTests, self).setUp()
         self.configuration_obj = spack.modules.CONFIGURATION
@@ -122,26 +120,26 @@ class TclTests(MockPackagesTest):
         return content
 
     def test_simple_case(self):
-        spack.modules.CONFIGURATION = configuration_autoload_direct
+        spack.modules.CONFIGURATION = self.configuration_autoload_direct
         spec = spack.spec.Spec('mpich@3.0.4=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertTrue('module-whatis "mpich @3.0.4"' in content)
 
     def test_autoload(self):
-        spack.modules.CONFIGURATION = configuration_autoload_direct
+        spack.modules.CONFIGURATION = self.configuration_autoload_direct
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'is-loaded' in x]), 2)
         self.assertEqual(len([x for x in content if 'module load ' in x]), 2)
 
-        spack.modules.CONFIGURATION = configuration_autoload_all
+        spack.modules.CONFIGURATION = self.configuration_autoload_all
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'is-loaded' in x]), 5)
         self.assertEqual(len([x for x in content if 'module load ' in x]), 5)
 
     def test_alter_environment(self):
-        spack.modules.CONFIGURATION = configuration_alter_environment
+        spack.modules.CONFIGURATION = self.configuration_alter_environment
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(
@@ -163,14 +161,14 @@ class TclTests(MockPackagesTest):
         self.assertEqual(len([x for x in content if 'unsetenv BAR' in x]), 0)
 
     def test_blacklist(self):
-        spack.modules.CONFIGURATION = configuration_blacklist
+        spack.modules.CONFIGURATION = self.configuration_blacklist
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'is-loaded' in x]), 1)
         self.assertEqual(len([x for x in content if 'module load ' in x]), 1)
 
     def test_conflicts(self):
-        spack.modules.CONFIGURATION = configuration_conflicts
+        spack.modules.CONFIGURATION = self.configuration_conflicts
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(
@@ -179,3 +177,114 @@ class TclTests(MockPackagesTest):
             len([x for x in content if x == 'conflict mpileaks']), 1)
         self.assertEqual(
             len([x for x in content if x == 'conflict intel/14.0.1']), 1)
+
+class LmodTests(MockPackagesTest):
+    configuration_autoload_direct = {
+        'enable': ['lmod'],
+        'lmod': {
+            'all': {
+                'autoload': 'direct'
+            }
+        }
+    }
+
+    configuration_autoload_all = {
+        'enable': ['lmod'],
+        'lmod': {
+            'all': {
+                'autoload': 'all'
+            }
+        }
+    }
+
+    configuration_alter_environment = {
+        'enable': ['lmod'],
+        'lmod': {
+            'all': {
+                'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
+            },
+            '=x86-linux': {
+                'environment': {'set': {'FOO': 'foo'},
+                                'unset': ['BAR']}
+            }
+        }
+    }
+
+    configuration_blacklist = {
+        'enable': ['lmod'],
+        'lmod': {
+            'blacklist': ['callpath'],
+            'all': {
+                'autoload': 'direct'
+            }
+        }
+    }
+
+    def setUp(self):
+        super(LmodTests, self).setUp()
+        self.configuration_obj = spack.modules.CONFIGURATION
+        spack.modules.open = mock_open
+        # Make sure that a non-mocked configuration will trigger an error
+        spack.modules.CONFIGURATION = None
+
+    def tearDown(self):
+        del spack.modules.open
+        spack.modules.CONFIGURATION = self.configuration_obj
+        super(LmodTests, self).tearDown()
+
+    def get_modulefile_content(self, spec):
+        spec.concretize()
+        generator = spack.modules.LmodModule(spec)
+        generator.write()
+        content = FILE_REGISTRY[generator.file_name].split('\n')
+        return content
+
+    def test_simple_case(self):
+        spack.modules.CONFIGURATION = self.configuration_autoload_direct
+        spec = spack.spec.Spec('mpich@3.0.4=x86-linux')
+        content = self.get_modulefile_content(spec)
+        self.assertTrue('-- -*- lua -*-' in content)
+        self.assertTrue('whatis([[Name : mpich]])' in content)
+        self.assertTrue('whatis([[Version : 3.0.4]])' in content)
+
+    def test_autoload(self):
+        spack.modules.CONFIGURATION = self.configuration_autoload_direct
+        spec = spack.spec.Spec('mpileaks=x86-linux')
+        content = self.get_modulefile_content(spec)
+        self.assertEqual(len([x for x in content if 'if not isloaded(' in x]), 2)
+        self.assertEqual(len([x for x in content if 'load(' in x]), 2)
+
+        spack.modules.CONFIGURATION = self.configuration_autoload_all
+        spec = spack.spec.Spec('mpileaks=x86-linux')
+        content = self.get_modulefile_content(spec)
+        self.assertEqual(len([x for x in content if 'if not isloaded(' in x]), 5)
+        self.assertEqual(len([x for x in content if 'load(' in x]), 5)
+
+    def test_alter_environment(self):
+        spack.modules.CONFIGURATION = self.configuration_alter_environment
+        spec = spack.spec.Spec('mpileaks=x86-linux')
+        content = self.get_modulefile_content(spec)
+        self.assertEqual(
+            len([x
+                 for x in content
+                 if x.startswith('prepend_path("CMAKE_PREFIX_PATH"')]), 0)
+        self.assertEqual(
+            len([x for x in content if 'setenv("FOO", "foo")' in x]), 1)
+        self.assertEqual(len([x for x in content if 'unsetenv("BAR")' in x]), 1)
+
+        spec = spack.spec.Spec('libdwarf=x64-linux')
+        content = self.get_modulefile_content(spec)
+        self.assertEqual(
+            len([x
+                 for x in content
+                 if x.startswith('prepend-path("CMAKE_PREFIX_PATH"')]), 0)
+        self.assertEqual(
+            len([x for x in content if 'setenv("FOO", "foo")' in x]), 0)
+        self.assertEqual(len([x for x in content if 'unsetenv("BAR")' in x]), 0)
+
+    def test_blacklist(self):
+        spack.modules.CONFIGURATION = self.configuration_blacklist
+        spec = spack.spec.Spec('mpileaks=x86-linux')
+        content = self.get_modulefile_content(spec)
+        self.assertEqual(len([x for x in content if 'if not isloaded(' in x]), 1)
+        self.assertEqual(len([x for x in content if 'load(' in x]), 1)
