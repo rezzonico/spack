@@ -48,7 +48,35 @@ def mock_open(filename, mode):
         FILE_REGISTRY[filename] = handle.getvalue()
         handle.close()
 
-class TclTests(MockPackagesTest):
+class ModuleFileGeneratorTests(MockPackagesTest):
+    """
+    Base class to test module file generators. Relies on child having defined
+    a 'factory' attribute to create an instance of the generator to be tested.
+    """
+    def setUp(self):
+        super(ModuleFileGeneratorTests, self).setUp()
+        self.configuration_obj = spack.modules.CONFIGURATION
+        spack.modules.open = mock_open
+        # Make sure that a non-mocked configuration will trigger an error
+        spack.modules.CONFIGURATION = None
+
+    def tearDown(self):
+        del spack.modules.open
+        spack.modules.CONFIGURATION = self.configuration_obj
+        super(ModuleFileGeneratorTests, self).tearDown()
+
+    def get_modulefile_content(self, spec):
+        spec.concretize()
+        generator = self.factory(spec)
+        generator.write()
+        content = FILE_REGISTRY[generator.file_name].split('\n')
+        return content
+
+
+class TclTests(ModuleFileGeneratorTests):
+
+    factory = spack.modules.TclModule
+
     configuration_autoload_direct = {
         'enable': ['tcl'],
         'tcl': {
@@ -99,25 +127,6 @@ class TclTests(MockPackagesTest):
             }
         }
     }
-
-    def setUp(self):
-        super(TclTests, self).setUp()
-        self.configuration_obj = spack.modules.CONFIGURATION
-        spack.modules.open = mock_open
-        # Make sure that a non-mocked configuration will trigger an error
-        spack.modules.CONFIGURATION = None
-
-    def tearDown(self):
-        del spack.modules.open
-        spack.modules.CONFIGURATION = self.configuration_obj
-        super(TclTests, self).tearDown()
-
-    def get_modulefile_content(self, spec):
-        spec.concretize()
-        generator = spack.modules.TclModule(spec)
-        generator.write()
-        content = FILE_REGISTRY[generator.file_name].split('\n')
-        return content
 
     def test_simple_case(self):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
@@ -178,7 +187,9 @@ class TclTests(MockPackagesTest):
         self.assertEqual(
             len([x for x in content if x == 'conflict intel/14.0.1']), 1)
 
-class LmodTests(MockPackagesTest):
+class LmodTests(ModuleFileGeneratorTests):
+    factory = spack.modules.LmodModule
+
     configuration_autoload_direct = {
         'enable': ['lmod'],
         'lmod': {
@@ -219,25 +230,6 @@ class LmodTests(MockPackagesTest):
             }
         }
     }
-
-    def setUp(self):
-        super(LmodTests, self).setUp()
-        self.configuration_obj = spack.modules.CONFIGURATION
-        spack.modules.open = mock_open
-        # Make sure that a non-mocked configuration will trigger an error
-        spack.modules.CONFIGURATION = None
-
-    def tearDown(self):
-        del spack.modules.open
-        spack.modules.CONFIGURATION = self.configuration_obj
-        super(LmodTests, self).tearDown()
-
-    def get_modulefile_content(self, spec):
-        spec.concretize()
-        generator = spack.modules.LmodModule(spec)
-        generator.write()
-        content = FILE_REGISTRY[generator.file_name].split('\n')
-        return content
 
     def test_simple_case(self):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
