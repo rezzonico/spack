@@ -48,11 +48,13 @@ def mock_open(filename, mode):
         FILE_REGISTRY[filename] = handle.getvalue()
         handle.close()
 
+
 class ModuleFileGeneratorTests(MockPackagesTest):
     """
     Base class to test module file generators. Relies on child having defined
     a 'factory' attribute to create an instance of the generator to be tested.
     """
+
     def setUp(self):
         super(ModuleFileGeneratorTests, self).setUp()
         self.configuration_instance = spack.modules.CONFIGURATION
@@ -190,6 +192,7 @@ class TclTests(ModuleFileGeneratorTests):
         self.assertEqual(
             len([x for x in content if x == 'conflict intel/14.0.1']), 1)
 
+
 class LmodTests(ModuleFileGeneratorTests):
     factory = spack.modules.LmodModule
 
@@ -246,13 +249,15 @@ class LmodTests(ModuleFileGeneratorTests):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
-        self.assertEqual(len([x for x in content if 'if not isloaded(' in x]), 2)
+        self.assertEqual(
+            len([x for x in content if 'if not isloaded(' in x]), 2)
         self.assertEqual(len([x for x in content if 'load(' in x]), 2)
 
         spack.modules.CONFIGURATION = self.configuration_autoload_all
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
-        self.assertEqual(len([x for x in content if 'if not isloaded(' in x]), 5)
+        self.assertEqual(
+            len([x for x in content if 'if not isloaded(' in x]), 5)
         self.assertEqual(len([x for x in content if 'load(' in x]), 5)
 
     def test_alter_environment(self):
@@ -265,7 +270,8 @@ class LmodTests(ModuleFileGeneratorTests):
                  if x.startswith('prepend_path("CMAKE_PREFIX_PATH"')]), 0)
         self.assertEqual(
             len([x for x in content if 'setenv("FOO", "foo")' in x]), 1)
-        self.assertEqual(len([x for x in content if 'unsetenv("BAR")' in x]), 1)
+        self.assertEqual(
+            len([x for x in content if 'unsetenv("BAR")' in x]), 1)
 
         spec = spack.spec.Spec('libdwarf=x64-linux')
         content = self.get_modulefile_content(spec)
@@ -275,11 +281,13 @@ class LmodTests(ModuleFileGeneratorTests):
                  if x.startswith('prepend-path("CMAKE_PREFIX_PATH"')]), 0)
         self.assertEqual(
             len([x for x in content if 'setenv("FOO", "foo")' in x]), 0)
-        self.assertEqual(len([x for x in content if 'unsetenv("BAR")' in x]), 0)
+        self.assertEqual(
+            len([x for x in content if 'unsetenv("BAR")' in x]), 0)
 
     def test_blacklist(self):
         spack.modules.CONFIGURATION = self.configuration_blacklist
         spec = spack.spec.Spec('mpileaks=x86-linux')
         content = self.get_modulefile_content(spec)
-        self.assertEqual(len([x for x in content if 'if not isloaded(' in x]), 1)
+        self.assertEqual(
+            len([x for x in content if 'if not isloaded(' in x]), 1)
         self.assertEqual(len([x for x in content if 'load(' in x]), 1)
