@@ -35,21 +35,30 @@ from spack.stage import DIYStage
 
 description = "Do-It-Yourself: build from an existing source directory."
 
+
 def setup_parser(subparser):
     subparser.add_argument(
-        '-i', '--ignore-dependencies', action='store_true', dest='ignore_deps',
+        '-i',
+        '--ignore-dependencies',
+        action='store_true',
+        dest='ignore_deps',
         help="Do not try to install dependencies of requested packages.")
     subparser.add_argument(
-        '--keep-prefix', action='store_true',
+        '--keep-prefix',
+        action='store_true',
         help="Don't remove the install prefix if installation fails.")
+    subparser.add_argument('--skip-patch',
+                           action='store_true',
+                           help="Skip patching for the DIY build.")
     subparser.add_argument(
-        '--skip-patch', action='store_true',
-        help="Skip patching for the DIY build.")
-    subparser.add_argument(
-        '-q', '--quiet', action='store_true', dest='quiet',
+        '-q',
+        '--quiet',
+        action='store_true',
+        dest='quiet',
         help="Do not display verbose build output while installing.")
     subparser.add_argument(
-        'spec', nargs=argparse.REMAINDER,
+        'spec',
+        nargs=argparse.REMAINDER,
         help="specs to use for install.  Must contain package AND verison.")
 
 
@@ -61,39 +70,36 @@ def diy(self, args):
     if len(specs) > 1:
         tty.die("spack diy only takes one spec.")
 
-    # Take a write lock before checking for existence.
-    with spack.installed_db.write_transaction():
-        spec = specs[0]
-        if not spack.repo.exists(spec.name):
-            tty.warn("No such package: %s" % spec.name)
-            create = tty.get_yes_or_no("Create this package?", default=False)
-            if not create:
-                tty.msg("Exiting without creating.")
-                sys.exit(1)
-            else:
-                tty.msg("Running 'spack edit -f %s'" % spec.name)
-                edit_package(spec.name, spack.repo.first_repo(), None, True)
-                return
-
-        if not spec.versions.concrete:
-            tty.die("spack diy spec must have a single, concrete version.  Did you forget a package version number?")
-
-        spec.concretize()
-        package = spack.repo.get(spec)
-
-        if package.installed:
-            tty.error("Already installed in %s" % package.prefix)
-            tty.msg("Uninstall or try adding a version suffix for this DIY build.")
+    spec = specs[0]
+    if not spack.repo.exists(spec.name):
+        tty.warn("No such package: %s" % spec.name)
+        create = tty.get_yes_or_no("Create this package?", default=False)
+        if not create:
+            tty.msg("Exiting without creating.")
             sys.exit(1)
+        else:
+            tty.msg("Running 'spack edit -f %s'" % spec.name)
+            edit_package(spec.name, spack.repo.first_repo(), None, True)
+            return
 
-        # Forces the build to run out of the current directory.
-        package.stage = DIYStage(os.getcwd())
+    if not spec.versions.concrete:
+        tty.die("spack diy spec must have a single, concrete version.  Did you forget a package version number?")  # NOQA: ignore=E501
 
-        # TODO: make this an argument, not a global.
-        spack.do_checksum = False
+    spec.concretize()
+    package = spack.repo.get(spec)
 
-        package.do_install(
-            keep_prefix=args.keep_prefix,
-            ignore_deps=args.ignore_deps,
-            verbose=not args.quiet,
-            keep_stage=True)   # don't remove source dir for DIY.
+    if package.installed:
+        tty.error("Already installed in %s" % package.prefix)
+        tty.msg("Uninstall or try adding a version suffix for this DIY build.")
+        sys.exit(1)
+
+    # Forces the build to run out of the current directory.
+    package.stage = DIYStage(os.getcwd())
+
+    # TODO: make this an argument, not a global.
+    spack.do_checksum = False
+
+    package.do_install(keep_prefix=args.keep_prefix,
+                       ignore_deps=args.ignore_deps,
+                       verbose=not args.quiet,
+                       keep_stage=True)  # don't remove source dir for DIY.

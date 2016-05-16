@@ -33,6 +33,7 @@ Homebrew makes it very easy to create packages.  For a complete
 rundown on spack and how it differs from homebrew, look at the
 README.
 """
+import contextlib
 import os
 import re
 import textwrap
@@ -40,6 +41,7 @@ import time
 import contextlib
 import glob
 
+import llnl.util.lock
 import llnl.util.tty as tty
 import spack
 import spack.build_environment
@@ -325,7 +327,8 @@ class Package(object):
     def __init__(self, spec):
         # this determines how the package should be built.
         self.spec = spec
-        self._prefix_lock = None # Lock on the prefix shared resource. Will be set in prefix property
+        # Lock on the prefix shared resource. Will be set in prefix property
+        self._prefix_lock = None
 
         # Name of package is the name of its module, without the
         # containing module names.
@@ -923,7 +926,8 @@ class Package(object):
         # Ensure package is not already installed
         with self._prefix_read_lock():
             if spack.install_layout.check_installed(self.spec):
-                tty.msg("%s is already installed in %s" % (self.name, self.prefix))
+                tty.msg("%s is already installed in %s" %
+                        (self.name, self.prefix))
                 return
 
         tty.msg("Installing %s" % self.name)
@@ -1387,9 +1391,11 @@ class Package(object):
     def rpath(self):
         """Get the rpath this package links with, as a list of paths."""
         rpaths = [self.prefix.lib, self.prefix.lib64]
-        rpaths.extend(d.prefix.lib for d in self.spec.traverse(root=False)
+        rpaths.extend(d.prefix.lib
+                      for d in self.spec.traverse(root=False)
                       if os.path.isdir(d.prefix.lib))
-        rpaths.extend(d.prefix.lib64 for d in self.spec.traverse(root=False)
+        rpaths.extend(d.prefix.lib64
+                      for d in self.spec.traverse(root=False)
                       if os.path.isdir(d.prefix.lib64))
         return rpaths
 
