@@ -55,14 +55,17 @@ class ModuleFileGeneratorTests(MockPackagesTest):
     """
     def setUp(self):
         super(ModuleFileGeneratorTests, self).setUp()
-        self.configuration_obj = spack.modules.CONFIGURATION
+        self.configuration_instance = spack.modules.CONFIGURATION
+        self.module_types_instance = spack.modules.module_types
         spack.modules.open = mock_open
         # Make sure that a non-mocked configuration will trigger an error
         spack.modules.CONFIGURATION = None
+        spack.modules.module_types = {self.factory.name: self.factory}
 
     def tearDown(self):
         del spack.modules.open
-        spack.modules.CONFIGURATION = self.configuration_obj
+        spack.modules.module_types = self.module_types_instance
+        spack.modules.CONFIGURATION = self.configuration_instance
         super(ModuleFileGeneratorTests, self).tearDown()
 
     def get_modulefile_content(self, spec):
