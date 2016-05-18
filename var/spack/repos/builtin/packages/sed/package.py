@@ -23,41 +23,17 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
 from spack import *
-import sys
 
 
-class Graphviz(Package):
-    """Graph Visualization Software"""
-    homepage = "http://www.graphviz.org"
-    url      = "http://www.graphviz.org/pub/graphviz/stable/SOURCES/graphviz-2.38.0.tar.gz"
+class Sed(Package):
+    """GNU implementation of the famous stream editor."""
+    homepage = "http://www.gnu.org/software/sed/"
+    url      = "http://ftpmirror.gnu.org/sed/sed-4.2.2.tar.bz2"
 
-    version('2.38.0', '5b6a829b2ac94efcd5fa3c223ed6d3ae')
-
-    # By default disable optional Perl language support to prevent build issues
-    # related to missing Perl packages. If spack begins support for Perl in the
-    # future, this package can be updated to depend_on('perl') and the
-    # ncecessary devel packages.
-    variant('perl', default=False, description='Enable if you need the optional Perl language bindings.')  # NOQA: ignore=E501
-
-    parallel = False
-
-    depends_on("swig")
-    depends_on("python")
-    depends_on("ghostscript")
-    depends_on("pkg-config")
+    version('4.2.2', '7ffe1c7cdc3233e1e0c4b502df253974')
 
     def install(self, spec, prefix):
-        options = ['--prefix=%s' % prefix]
-        if '+perl' not in spec:
-            options.append('--disable-perl')
+        configure('--prefix=%s' % prefix)
 
-        # On OSX fix the compiler error:
-        # In file included from tkStubLib.c:15:
-        # /usr/include/tk.h:78:11: fatal error: 'X11/Xlib.h' file not found
-        #       include <X11/Xlib.h>
-        if sys.platform == 'darwin':
-            options.append('CFLAGS=-I/opt/X11/include')
-
-        configure(*options)
         make()
         make("install")
