@@ -91,6 +91,7 @@ class InstallRecord(object):
     dependents left.
 
     """
+
     def __init__(self, spec, path, installed, ref_count=0, explicit=False):
         self.spec = spec
         self.path = str(path)
@@ -99,16 +100,17 @@ class InstallRecord(object):
         self.explicit = explicit
 
     def to_dict(self):
-        return { 'spec'      : self.spec.to_node_dict(),
-                 'path'      : self.path,
-                 'installed' : self.installed,
-                 'ref_count' : self.ref_count,
-                 'explicit'  : self.explicit }
+        return {'spec': self.spec.to_node_dict(),
+                'path': self.path,
+                'installed': self.installed,
+                'ref_count': self.ref_count,
+                'explicit': self.explicit}
 
     @classmethod
     def from_dict(cls, spec, dictionary):
         d = dictionary
-        return InstallRecord(spec, d['path'], d['installed'], d['ref_count'], d.get('explicit', False))
+        return InstallRecord(spec, d['path'], d['installed'], d['ref_count'],
+                             d.get('explicit', False))
 
 
 class Database(object):
@@ -250,7 +252,6 @@ class Database(object):
         check('installs' in db, "No 'installs' in YAML DB.")
         check('version' in db, "No 'version' in YAML DB.")
 
-
         installs = db['installs']
 
         # TODO: better version checking semantics.
@@ -286,8 +287,7 @@ class Database(object):
             except Exception as e:
                 tty.warn("Invalid database record:",
                          "file:  %s" % self._index_path,
-                         "hash:  %s" % hash_key,
-                         "cause: %s" % str(e))
+                         "hash:  %s" % hash_key, "cause: %s" % str(e))
                 raise
 
         self._data = data
@@ -374,7 +374,6 @@ class Database(object):
             # reindex() takes its own write lock, so no lock here.
             self.reindex(spack.install_layout)
 
-
     def _add(self, spec, path, directory_layout=None, explicit=False):
         """Add an install record for spec at path to the database.
 
@@ -397,7 +396,10 @@ class Database(object):
             rec.path = path
 
         else:
-            self._data[key] = InstallRecord(spec, path, True, explicit=explicit)
+            self._data[key] = InstallRecord(spec,
+                                            path,
+                                            True,
+                                            explicit=explicit)
             for dep in spec.dependencies.values():
                 self._increment_ref_count(dep, directory_layout)
 
