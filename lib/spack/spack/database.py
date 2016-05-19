@@ -396,7 +396,9 @@ class Database(object):
             rec.path = path
 
         else:
-            self._data[key] = InstallRecord(spec, path, True,
+            self._data[key] = InstallRecord(spec,
+                                            path,
+                                            True,
                                             explicit=explicit)
             for dep in spec.dependencies.values():
                 self._increment_ref_count(dep, directory_layout)
