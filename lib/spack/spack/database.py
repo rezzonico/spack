@@ -53,6 +53,7 @@ from spack.spec import Spec
 from spack.version import Version
 from yaml.error import MarkedYAMLError, YAMLError
 
+
 # DB goes in this directory underneath the root
 _db_dirname = '.spack-db'
 
@@ -100,15 +101,19 @@ class InstallRecord(object):
         self.explicit = explicit
 
     def to_dict(self):
-        return {'spec': self.spec.to_node_dict(),
-                'path': self.path,
-                'installed': self.installed,
-                'ref_count': self.ref_count}
+        return {
+            'spec': self.spec.to_node_dict(),
+            'path': self.path,
+            'installed': self.installed,
+            'ref_count': self.ref_count,
+            'explicit': self.explicit
+        }
 
     @classmethod
     def from_dict(cls, spec, dictionary):
         d = dictionary
-        return InstallRecord(spec, d['path'], d['installed'], d['ref_count'], d.get('explicit', False))
+        return InstallRecord(spec, d['path'], d['installed'], d['ref_count'],
+                             d.get('explicit', False))
 
 
 class Database(object):
@@ -195,9 +200,6 @@ class Database(object):
 
         Does not do any locking.
         """
-        if hash_key not in installs:
-            read_spec(installs[parent_key]['path'])
-
         spec_dict = installs[hash_key]['spec']
 
         # Install records don't include hash with spec, so we add it in here
@@ -250,7 +252,6 @@ class Database(object):
         check('installs' in db, "No 'installs' in YAML DB.")
         check('version' in db, "No 'version' in YAML DB.")
 
-
         installs = db['installs']
 
         # TODO: better version checking semantics.
@@ -279,8 +280,8 @@ class Database(object):
 
                 # Insert the brand new spec in the database.  Each
                 # spec has its own copies of its dependency specs.
-                # TODO : would a more immutable spec
-                # TODO : implementation simplify this?
+                # TODO: would a more immmutable spec implementation simplify
+                #       this?
                 data[hash_key] = InstallRecord.from_dict(spec, rec)
 
             except Exception as e:
@@ -395,7 +396,8 @@ class Database(object):
             rec.path = path
 
         else:
-            self._data[key] = InstallRecord(spec, path, True, explicit=explicit)
+            self._data[key] = InstallRecord(spec, path, True,
+                                            explicit=explicit)
             for dep in spec.dependencies.values():
                 self._increment_ref_count(dep, directory_layout)
 
