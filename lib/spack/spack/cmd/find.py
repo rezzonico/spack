@@ -192,7 +192,7 @@ def find(parser, args):
         tty.msg(msg)
 
         if not query_specs:
-            return
+            raise SystemExit(1)
 
     # Set up query arguments.
     installed, known = True, any
@@ -229,3 +229,6 @@ def find(parser, args):
                   long=args.long,
                   very_long=args.very_long,
                   show_flags=args.show_flags)
+
+    if not specs:
+        raise SystemExit(1)
