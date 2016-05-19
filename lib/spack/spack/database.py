@@ -57,7 +57,7 @@ from yaml.error import MarkedYAMLError, YAMLError
 _db_dirname = '.spack-db'
 
 # DB version.  This is stuck in the DB file to track changes in format.
-_db_version = Version('0.9')
+_db_version = Version('0.9.1')
 
 # Default timeout for spack database locks is 5 min.
 _db_lock_timeout = 60
@@ -92,11 +92,12 @@ class InstallRecord(object):
 
     """
 
-    def __init__(self, spec, path, installed, ref_count=0):
+    def __init__(self, spec, path, installed, ref_count=0, explicit=False):
         self.spec = spec
         self.path = str(path)
         self.installed = bool(installed)
         self.ref_count = ref_count
+        self.explicit = explicit
 
     def to_dict(self):
         return {'spec': self.spec.to_node_dict(),
@@ -107,7 +108,7 @@ class InstallRecord(object):
     @classmethod
     def from_dict(cls, spec, dictionary):
         d = dictionary
-        return InstallRecord(spec, d['path'], d['installed'], d['ref_count'])
+        return InstallRecord(spec, d['path'], d['installed'], d['ref_count'], d.get('explicit', False))
 
 
 class Database(object):
@@ -199,6 +200,11 @@ class Database(object):
 
         spec_dict = installs[hash_key]['spec']
 
+        # Install records don't include hash with spec, so we add it in here
+        # to ensure it is read properly.
+        for name in spec_dict:
+            spec_dict[name]['hash'] = hash_key
+
         # Build spec from dict first.
         spec = Spec.from_node_dict(spec_dict)
 
@@ -244,13 +250,18 @@ class Database(object):
         check('installs' in db, "No 'installs' in YAML DB.")
         check('version' in db, "No 'version' in YAML DB.")
 
+
+        installs = db['installs']
+
         # TODO: better version checking semantics.
         version = Version(db['version'])
-        if version != _db_version:
+        if version > _db_version:
             raise InvalidDatabaseVersionError(_db_version, version)
+        elif version < _db_version:
+            self.reindex(spack.install_layout)
+            installs = dict((k, v.to_dict()) for k, v in self._data.items())
 
         # Iterate through database and check each record.
-        installs = db['installs']
         data = {}
         for hash_key, rec in installs.items():
             try:
@@ -362,7 +373,7 @@ class Database(object):
             # reindex() takes its own write lock, so no lock here.
             self.reindex(spack.install_layout)
 
-    def _add(self, spec, path, directory_layout=None):
+    def _add(self, spec, path, directory_layout=None, explicit=False):
         """Add an install record for spec at path to the database.
 
         This assumes that the spec is not already installed. It
@@ -384,7 +395,7 @@ class Database(object):
             rec.path = path
 
         else:
-            self._data[key] = InstallRecord(spec, path, True)
+            self._data[key] = InstallRecord(spec, path, True, explicit=explicit)
             for dep in spec.dependencies.values():
                 self._increment_ref_count(dep, directory_layout)
 
@@ -406,7 +417,7 @@ class Database(object):
         self._data[key].ref_count += 1
 
     @_autospec
-    def add(self, spec, path):
+    def add(self, spec, path, explicit=False):
         """Add spec at path to database, locking and reading DB to sync.
 
         ``add()`` will lock and read from the DB on disk.
@@ -415,7 +426,7 @@ class Database(object):
         # TODO: ensure that spec is concrete?
         # Entire add is transactional.
         with self.write_transaction():
-            self._add(spec, path)
+            self._add(spec, path, explicit=explicit)
 
     def _get_matching_spec_key(self, spec, **kwargs):
         """Get the exact spec OR get a single spec that matches."""
@@ -497,7 +508,7 @@ class Database(object):
             # skips unknown packages
             # TODO: conditional way to do this instead of catching exceptions
 
-    def query(self, query_spec=any, known=any, installed=True):
+    def query(self, query_spec=any, known=any, installed=True, explicit=any):
         """Run a query on the database.
 
         ``query_spec``
@@ -536,6 +547,8 @@ class Database(object):
             results = []
             for key, rec in self._data.items():
                 if installed is not any and rec.installed != installed:
+                    continue
+                if explicit is not any and rec.explicit != explicit:
                     continue
                 if known is not any and spack.repo.exists(
                         rec.spec.name) != known:

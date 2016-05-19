@@ -896,7 +896,8 @@ class Package(object):
                    skip_patch=False,
                    verbose=False,
                    make_jobs=None,
-                   fake=False):
+                   fake=False,
+                   explicit=False):
         """Called by commands to install a package and its dependencies.
 
         Package implementations should override install() to describe
@@ -926,8 +927,12 @@ class Package(object):
         # Ensure package is not already installed
         with self._prefix_read_lock():
             if spack.install_layout.check_installed(self.spec):
-                tty.msg("%s is already installed in %s" %
-                        (self.name, self.prefix))
+                tty.msg("%s is already installed in %s" % (self.name, self.prefix))
+                rec = spack.installed_db.get_record(self.spec)
+                if (not rec.explicit) and explicit:
+                    with spack.installed_db.write_transaction():
+                        rec = spack.installed_db.get_record(self.spec)
+                        rec.explicit = True
                 return
 
         tty.msg("Installing %s" % self.name)
@@ -1038,7 +1043,7 @@ class Package(object):
         # Note: PARENT of the build process adds the new package to
         # the database, so that we don't need to re-read from file.
         # Note: add implicitly acquires a write-lock
-        spack.installed_db.add(self.spec, self.prefix)
+        spack.installed_db.add(self.spec, self.prefix, explicit=explicit)
 
     def sanity_check_prefix(self):
         """This function checks whether install succeeded."""

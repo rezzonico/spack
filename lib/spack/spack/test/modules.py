@@ -49,6 +49,12 @@ def mock_open(filename, mode):
         handle.close()
 
 
+# Spec strings that will be used throughout the tests
+mpich_spec_string = 'mpich@3.0.4 arch=x86-linux'
+mpileaks_spec_string = 'mpileaks arch=x86-linux'
+libdwarf_spec_string = 'libdwarf arch=x64-linux'
+
+
 class ModuleFileGeneratorTests(MockPackagesTest):
     """
     Base class to test module file generators. Relies on child having defined
@@ -106,7 +112,7 @@ class TclTests(ModuleFileGeneratorTests):
             'all': {
                 'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
             },
-            '=x86-linux': {
+            'arch=x86-linux': {
                 'environment': {'set': {'FOO': 'foo'},
                                 'unset': ['BAR']}
             }
@@ -135,26 +141,26 @@ class TclTests(ModuleFileGeneratorTests):
 
     def test_simple_case(self):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
-        spec = spack.spec.Spec('mpich@3.0.4=x86-linux')
+        spec = spack.spec.Spec(mpich_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertTrue('module-whatis "mpich @3.0.4"' in content)
 
     def test_autoload(self):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'is-loaded' in x]), 2)
         self.assertEqual(len([x for x in content if 'module load ' in x]), 2)
 
         spack.modules.CONFIGURATION = self.configuration_autoload_all
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'is-loaded' in x]), 5)
         self.assertEqual(len([x for x in content if 'module load ' in x]), 5)
 
     def test_alter_environment(self):
         spack.modules.CONFIGURATION = self.configuration_alter_environment
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x
@@ -164,7 +170,7 @@ class TclTests(ModuleFileGeneratorTests):
             len([x for x in content if 'setenv FOO "foo"' in x]), 1)
         self.assertEqual(len([x for x in content if 'unsetenv BAR' in x]), 1)
 
-        spec = spack.spec.Spec('libdwarf=x64-linux')
+        spec = spack.spec.Spec(libdwarf_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x
@@ -176,14 +182,14 @@ class TclTests(ModuleFileGeneratorTests):
 
     def test_blacklist(self):
         spack.modules.CONFIGURATION = self.configuration_blacklist
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'is-loaded' in x]), 1)
         self.assertEqual(len([x for x in content if 'module load ' in x]), 1)
 
     def test_conflicts(self):
         spack.modules.CONFIGURATION = self.configuration_conflicts
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x for x in content if x.startswith('conflict')]), 2)
@@ -220,7 +226,7 @@ class LmodTests(ModuleFileGeneratorTests):
             'all': {
                 'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
             },
-            '=x86-linux': {
+            'arch=x86-linux': {
                 'environment': {'set': {'FOO': 'foo'},
                                 'unset': ['BAR']}
             }
@@ -239,7 +245,7 @@ class LmodTests(ModuleFileGeneratorTests):
 
     def test_simple_case(self):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
-        spec = spack.spec.Spec('mpich@3.0.4=x86-linux')
+        spec = spack.spec.Spec(mpich_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertTrue('-- -*- lua -*-' in content)
         self.assertTrue('whatis([[Name : mpich]])' in content)
@@ -247,14 +253,14 @@ class LmodTests(ModuleFileGeneratorTests):
 
     def test_autoload(self):
         spack.modules.CONFIGURATION = self.configuration_autoload_direct
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x for x in content if 'if not isloaded(' in x]), 2)
         self.assertEqual(len([x for x in content if 'load(' in x]), 2)
 
         spack.modules.CONFIGURATION = self.configuration_autoload_all
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x for x in content if 'if not isloaded(' in x]), 5)
@@ -262,7 +268,7 @@ class LmodTests(ModuleFileGeneratorTests):
 
     def test_alter_environment(self):
         spack.modules.CONFIGURATION = self.configuration_alter_environment
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x
@@ -273,7 +279,7 @@ class LmodTests(ModuleFileGeneratorTests):
         self.assertEqual(
             len([x for x in content if 'unsetenv("BAR")' in x]), 1)
 
-        spec = spack.spec.Spec('libdwarf=x64-linux')
+        spec = spack.spec.Spec(libdwarf_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x
@@ -286,7 +292,7 @@ class LmodTests(ModuleFileGeneratorTests):
 
     def test_blacklist(self):
         spack.modules.CONFIGURATION = self.configuration_blacklist
-        spec = spack.spec.Spec('mpileaks=x86-linux')
+        spec = spack.spec.Spec(mpileaks_spec_string)
         content = self.get_modulefile_content(spec)
         self.assertEqual(
             len([x for x in content if 'if not isloaded(' in x]), 1)
