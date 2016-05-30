@@ -40,6 +40,8 @@ class Hpl(Package):
 
     variant('openmp', default=False, description='Enable OpenMP support')
 
+    parallel = False
+
     depends_on('mpi@1.1:')
     depends_on('blas')
 
