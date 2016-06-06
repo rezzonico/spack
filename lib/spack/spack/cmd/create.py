@@ -1,27 +1,29 @@
+_copyright = """\
 ##############################################################################
-# Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2013-2016, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory.
 #
 # This file is part of Spack.
-# Written by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
+# Created by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
 # LLNL-CODE-647188
 #
 # For details, see https://github.com/llnl/spack
 # Please also see the LICENSE file for our notice and the LGPL.
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License (as published by
-# the Free Software Foundation) version 2.1 dated February 1999.
+# it under the terms of the GNU Lesser General Public License (as
+# published by the Free Software Foundation) version 2.1, February 1999.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-# conditions of the GNU General Public License for more details.
+# conditions of the GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
+"""
 import string
 import os
 import hashlib
@@ -47,22 +49,22 @@ from spack.stage import Stage
 
 description = "Create a new package file from an archive URL"
 
-package_template = string.Template("""\
-# FIXME:
-# This is a template package file for Spack.  We've conveniently
-# put "FIXME" labels next to all the things you'll want to change.
+package_template = string.Template(
+    _copyright + """
 #
-# Once you've edited all the FIXME's, delete this whole message,
-# save this file, and test out your package like this:
+# This is a template package file for Spack.  We've put "FIXME"
+# next to all the things you'll want to change. Once you've handled
+# them, you can save this file and test your package like this:
 #
 #     spack install ${name}
 #
-# You can always get back here to change things with:
+# You can edit this file again by typing:
 #
 #     spack edit ${name}
 #
-# See the spack documentation for more information on building
-# packages.
+# See the Spack documentation for more information on packaging.
+# If you submit this package back to Spack as a pull request,
+# please first remove this boilerplate and all FIXME comments.
 #
 from spack import *
 
@@ -124,10 +126,12 @@ class ConfigureGuesser(object):
         autotools = "configure('--prefix=%s' % prefix)"
         cmake     = "cmake('.', *std_cmake_args)"
         python    = "python('setup.py', 'install', '--prefix=%s' % prefix)"
+        r         = "R('CMD', 'INSTALL', '--library=%s' % self.module.r_lib_dir, '%s' % self.stage.archive_file)"
 
         config_lines = ((r'/configure$',      'autotools', autotools),
                         (r'/CMakeLists.txt$', 'cmake',     cmake),
-                        (r'/setup.py$',       'python',    python))
+                        (r'/setup.py$',       'python',    python),
+                        (r'/NAMESPACE$',      'r',         r))
 
         # Peek inside the tarball.
         tar = which('tar')
@@ -156,7 +160,7 @@ def guess_name_and_version(url, args):
     # Try to deduce name and version of the new package from the URL
     version = spack.url.parse_version(url)
     if not version:
-        tty.die("Couldn't guess a version string from %s." % url)
+        tty.die("Couldn't guess a version string from %s" % url)
 
     # Try to guess a name.  If it doesn't work, allow the user to override.
     if args.alternate_name:
@@ -189,7 +193,7 @@ def find_repository(spec, args):
         try:
             repo = Repo(repo_path)
             if spec.namespace and spec.namespace != repo.namespace:
-                tty.die("Can't create package with namespace %s in repo with namespace %s."
+                tty.die("Can't create package with namespace %s in repo with namespace %s"
                         % (spec.namespace, repo.namespace))
         except RepoError as e:
             tty.die(str(e))
@@ -208,7 +212,7 @@ def find_repository(spec, args):
     return repo
 
 
-def fetch_tarballs(url, name, args):
+def fetch_tarballs(url, name, version):
     """Try to find versions of the supplied archive by scraping the web.
 
     Prompts the user to select how many to download if many are found.
@@ -222,7 +226,7 @@ def fetch_tarballs(url, name, args):
     archives_to_fetch = 1
     if not versions:
         # If the fetch failed for some reason, revert to what the user provided
-        versions = { "version" : url }
+        versions = { version : url }
     elif len(versions) > 1:
         tty.msg("Found %s versions of %s:" % (len(versions), name),
                 *spack.cmd.elide_list(
@@ -252,11 +256,11 @@ def create(parser, args):
     name = spec.name  # factors out namespace, if any
     repo = find_repository(spec, args)
 
-    tty.msg("This looks like a URL for %s version %s." % (name, version))
+    tty.msg("This looks like a URL for %s version %s" % (name, version))
     tty.msg("Creating template for package %s" % name)
 
     # Fetch tarballs (prompting user if necessary)
-    versions, urls = fetch_tarballs(url, name, args)
+    versions, urls = fetch_tarballs(url, name, version)
 
     # Try to guess what configure system is used.
     guesser = ConfigureGuesser()
@@ -266,11 +270,15 @@ def create(parser, args):
         keep_stage=args.keep_stage)
 
     if not ver_hash_tuples:
-        tty.die("Could not fetch any tarballs for %s." % name)
+        tty.die("Could not fetch any tarballs for %s" % name)
 
     # Prepend 'py-' to python package names, by convention.
     if guesser.build_system == 'python':
         name = 'py-%s' % name
+
+    # Prepend 'r-' to R package names, by convention.
+    if guesser.build_system == 'r':
+        name = 'r-%s' % name
 
     # Create a directory for the new package.
     pkg_path = repo.filename_for_package_name(name)
@@ -291,4 +299,4 @@ def create(parser, args):
 
     # If everything checks out, go ahead and edit.
     spack.editor(pkg_path)
-    tty.msg("Created package %s." % pkg_path)
+    tty.msg("Created package %s" % pkg_path)

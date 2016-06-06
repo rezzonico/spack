@@ -1,26 +1,26 @@
 ##############################################################################
-# Copyright (c) 2015, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2013-2016, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory.
 #
 # This file is part of Spack.
-# Written by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
+# Created by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
 # LLNL-CODE-647188
 #
-# For details, see https://scalability-llnl.github.io/spack
+# For details, see https://github.com/llnl/spack
 # Please also see the LICENSE file for our notice and the LGPL.
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License (as published by
-# the Free Software Foundation) version 2.1 dated February 1999.
+# it under the terms of the GNU Lesser General Public License (as
+# published by the Free Software Foundation) version 2.1, February 1999.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-# conditions of the GNU General Public License for more details.
+# conditions of the GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
 
 import os
@@ -69,11 +69,11 @@ class ABI(object):
         if not libpath:
             return None
         return os.path.basename(libpath)
-        
-        
+
+
     @memoized
     def _gcc_compiler_compare(self, pversion, cversion):
-        """Returns true iff the gcc version pversion and cversion 
+        """Returns true iff the gcc version pversion and cversion
           are ABI compatible."""
         plib = self._gcc_get_libstdcxx_version(pversion)
         clib = self._gcc_get_libstdcxx_version(cversion)
@@ -86,43 +86,43 @@ class ABI(object):
         """Returns true iff the intel version pversion and cversion
            are ABI compatible"""
 
-        #Test major and minor versions.  Ignore build version.
+        # Test major and minor versions.  Ignore build version.
         if (len(pversion.version) < 2 or len(cversion.version) < 2):
             return False
-        return (pversion.version[0] == cversion.version[0]) and \
-            (pversion.version[1] == cversion.version[1])
-        
-    
+        return pversion.version[:2] == cversion.version[:2]
+
+
     def compiler_compatible(self, parent, child, **kwargs):
         """Returns true iff the compilers for parent and child specs are ABI compatible"""
         if not parent.compiler or not child.compiler:
             return True
-        
+
         if parent.compiler.name != child.compiler.name:
-            #Different compiler families are assumed ABI incompatible
+            # Different compiler families are assumed ABI incompatible
             return False
-        
+
         if kwargs.get('loose', False):
             return True
 
+        # TODO: Can we move the specialized ABI matching stuff
+        # TODO: into compiler classes?
         for pversion in parent.compiler.versions:
             for cversion in child.compiler.versions:
-                #For a few compilers use specialized comparisons.  Otherwise
+                # For a few compilers use specialized comparisons.  Otherwise
                 # match on version match.
                 if pversion.satisfies(cversion):
                     return True
-                elif parent.compiler.name == "gcc" and \
-                     self._gcc_compiler_compare(pversion, cversion):
+                elif (parent.compiler.name == "gcc" and
+                      self._gcc_compiler_compare(pversion, cversion)):
                     return True
-                elif parent.compiler.name == "intel" and \
-                     self._intel_compiler_compare(pversion, cversion):
+                elif (parent.compiler.name == "intel" and
+                      self._intel_compiler_compare(pversion, cversion)):
                     return True
         return False
 
-    
+
     def compatible(self, parent, child, **kwargs):
         """Returns true iff a parent and child spec are ABI compatible"""
         loosematch = kwargs.get('loose', False)
         return self.architecture_compatible(parent, child) and \
                self.compiler_compatible(parent, child, loose=loosematch)
-    

@@ -1,26 +1,26 @@
 ##############################################################################
-# Copyright (c) 2013-2015, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2013-2016, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory.
 #
 # This file is part of Spack.
-# Written by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
+# Created by Todd Gamblin, tgamblin@llnl.gov, All rights reserved.
 # LLNL-CODE-647188
 #
-# For details, see https://llnl.github.io/spack
+# For details, see https://github.com/llnl/spack
 # Please also see the LICENSE file for our notice and the LGPL.
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License (as published by
-# the Free Software Foundation) version 2.1 dated February 1999.
+# it under the terms of the GNU Lesser General Public License (as
+# published by the Free Software Foundation) version 2.1, February 1999.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-# conditions of the GNU General Public License for more details.
+# conditions of the GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
 import os
 import re
@@ -74,51 +74,7 @@ def setup_parser(subparser):
 
 def repo_create(args):
     """Create a new package repository."""
-    root = canonicalize_path(args.directory)
-    namespace = args.namespace
-
-    if not args.namespace:
-        namespace = os.path.basename(root)
-
-    if not re.match(r'\w[\.\w-]*', namespace):
-        tty.die("'%s' is not a valid namespace." % namespace)
-
-    existed = False
-    if os.path.exists(root):
-        if os.path.isfile(root):
-            tty.die('File %s already exists and is not a directory' % root)
-        elif os.path.isdir(root):
-            if not os.access(root, os.R_OK | os.W_OK):
-                tty.die('Cannot create new repo in %s: cannot access directory.' % root)
-            if os.listdir(root):
-                tty.die('Cannot create new repo in %s: directory is not empty.' % root)
-        existed = True
-
-    full_path = os.path.realpath(root)
-    parent = os.path.dirname(full_path)
-    if not os.access(parent, os.R_OK | os.W_OK):
-        tty.die("Cannot create repository in %s: can't access parent!" % root)
-
-    try:
-        config_path = os.path.join(root, repo_config_name)
-        packages_path = os.path.join(root, packages_dir_name)
-
-        mkdirp(packages_path)
-        with open(config_path, 'w') as config:
-            config.write("repo:\n")
-            config.write("  namespace: '%s'\n" % namespace)
-
-    except (IOError, OSError) as e:
-        tty.die('Failed to create new repository in %s.' % root,
-                "Caused by %s: %s" % (type(e), e))
-
-        # try to clean up.
-        if existed:
-            shutil.rmtree(config_path, ignore_errors=True)
-            shutil.rmtree(packages_path, ignore_errors=True)
-        else:
-            shutil.rmtree(root, ignore_errors=True)
-
+    full_path, namespace = create_repo(args.directory, args.namespace)
     tty.msg("Created repo with namespace '%s'." % namespace)
     tty.msg("To register it with spack, run this command:",
             'spack repo add %s' % full_path)
@@ -133,11 +89,11 @@ def repo_add(args):
 
     # check if the path exists
     if not os.path.exists(canon_path):
-        tty.die("No such file or directory: '%s'." % path)
+        tty.die("No such file or directory: %s" % path)
 
     # Make sure the path is a directory.
     if not os.path.isdir(canon_path):
-        tty.die("Not a Spack repository: '%s'." % path)
+        tty.die("Not a Spack repository: %s" % path)
 
     # Make sure it's actually a spack repository by constructing it.
     repo = Repo(canon_path)
@@ -147,7 +103,7 @@ def repo_add(args):
     if not repos: repos = []
 
     if repo.root in repos or path in repos:
-        tty.die("Repository is already registered with Spack: '%s'" % path)
+        tty.die("Repository is already registered with Spack: %s" % path)
 
     repos.insert(0, canon_path)
     spack.config.update_config('repos', repos, args.scope)
@@ -166,7 +122,7 @@ def repo_remove(args):
         if canon_path == repo_canon_path:
             repos.remove(repo_path)
             spack.config.update_config('repos', repos, args.scope)
-            tty.msg("Removed repository '%s'." % repo_path)
+            tty.msg("Removed repository %s" % repo_path)
             return
 
     # If it is a namespace, remove corresponding repo
@@ -176,13 +132,13 @@ def repo_remove(args):
             if repo.namespace == path_or_namespace:
                 repos.remove(path)
                 spack.config.update_config('repos', repos, args.scope)
-                tty.msg("Removed repository '%s' with namespace %s."
+                tty.msg("Removed repository %s with namespace '%s'."
                         % (repo.root, repo.namespace))
                 return
         except RepoError as e:
             continue
 
-    tty.die("No repository with path or namespace: '%s'"
+    tty.die("No repository with path or namespace: %s"
             % path_or_namespace)
 
 
