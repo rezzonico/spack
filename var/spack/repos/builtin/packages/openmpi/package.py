@@ -98,7 +98,6 @@ class Openmpi(Package):
     def url_for_version(self, version):
         return "http://www.open-mpi.org/software/ompi/v%s/downloads/openmpi-%s.tar.bz2" % (version.up_to(2), version)
 
-
     def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
         spack_env.set('OMPI_CC', spack_cc)
         spack_env.set('OMPI_CXX', spack_cxx)
@@ -122,7 +121,7 @@ class Openmpi(Package):
 
     def install(self, spec, prefix):
         config_args = ["--prefix=%s" % prefix,
-                       "--with-hwloc=%s" % spec['hwloc'].prefix,
+                       '--with-hwloc=external' if '@external' in spec['hwloc']  else ('--with-hwloc=%s' % spec['hwloc'].prefix),
                        "--enable-shared",
                        "--enable-static"]
         # Variant based arguments
@@ -136,6 +135,7 @@ class Openmpi(Package):
             '--with-mxm' if '+mxm' in spec else '--without-mxm',
             # Other options
             '--enable-mpi-thread-multiple' if '+thread_multiple' in spec else '--disable-mpi-thread-multiple',
+            '--with-pmi' if '+pmi' in spec else '--without-pmi',
             '--with-pmi' if '+pmi' in spec else '--without-pmi',
             '--with-sqlite3' if '+sqlite3' in spec else '--without-sqlite3',
             '--enable-vt' if '+vt' in spec else '--disable-vt'
