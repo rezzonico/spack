@@ -128,7 +128,7 @@ class Openmpi(Package):
         try:
             hwloc_support = '--with-hwloc=external' if '@external' in spec['hwloc'] else ('--with-hwloc=%s' % spec['hwloc'].prefix),
         except KeyError:
-            hwloc_support = '--without-hwloc'
+            hwloc_support = '--with-hwloc=internal'
 
         # Variant based arguments
         config_args.extend([
