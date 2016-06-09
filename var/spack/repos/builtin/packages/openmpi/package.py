@@ -71,6 +71,8 @@ class Openmpi(Package):
     patch('llnl-platforms.patch', when="@1.6.5")
     patch('configure.patch', when="@1.10.0:1.10.1")
 
+    variant('hwloc', default=True, description='Build support for HWLOC.')
+
     variant('psm', default=False, description='Build support for the PSM library.')
     variant('psm2', default=False, description='Build support for the Intel PSM2 library.')
     variant('pmi', default=False, description='Build support for PMI-based launchers')
@@ -92,7 +94,7 @@ class Openmpi(Package):
     provides('mpi@:2.2', when='@1.6.5')
     provides('mpi@:3.0', when='@1.7.5:')
 
-    depends_on('hwloc')
+    depends_on('hwloc', when='+hwloc')
     depends_on('sqlite', when='+sqlite3')
 
     def url_for_version(self, version):
@@ -121,11 +123,16 @@ class Openmpi(Package):
 
     def install(self, spec, prefix):
         config_args = ["--prefix=%s" % prefix,
-                       '--with-hwloc=external' if '@external' in spec['hwloc']  else ('--with-hwloc=%s' % spec['hwloc'].prefix),
                        "--enable-shared",
                        "--enable-static"]
+        try:
+            hwloc_support = '--with-hwloc=external' if '@external' in spec['hwloc'] else ('--with-hwloc=%s' % spec['hwloc'].prefix),
+        except KeyError:
+            hwloc_support = '--without-hwloc'
+
         # Variant based arguments
         config_args.extend([
+            hwloc_support,
             # Schedulers
             '--with-tm' if '+tm' in spec else '--without-tm',
             '--with-slurm' if '+slurm' in spec else '--without-slurm',
