@@ -192,9 +192,9 @@ def install_single_spec(spec, number_of_jobs):
 def get_filename(args, top_spec):
     if not args.output:
         fname = 'test-{x.name}-{x.version}-{hash}.xml'.format(x=top_spec, hash=top_spec.dag_hash())
-        output_directory = join_path(os.getcwd(), 'test-output')
+        output_directory = join_path(os.getcwd(), 'test-output', top_spec.architecture)
         if not os.path.exists(output_directory):
-            os.mkdir(output_directory)
+            mkdirp(output_directory)
         output_filename = join_path(output_directory, fname)
     else:
         output_filename = args.output
