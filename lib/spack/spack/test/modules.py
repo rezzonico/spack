@@ -55,6 +55,42 @@ mpich_spec_string = 'mpich@3.0.4 arch=x86-linux'
 mpileaks_spec_string = 'mpileaks arch=x86-linux'
 libdwarf_spec_string = 'libdwarf arch=x64-linux'
 
+class HelperFunctionsTests(unittest.TestCase):
+
+    def test_update_dictionary_extending_list(self):
+        target = {
+            'foo': {
+                'a': 1,
+                'b': 2,
+                'd': 4
+            },
+            'bar': [1, 2, 4],
+            'baz': 'foobar'
+        }
+        update = {
+            'foo': {
+                'c': 3,
+            },
+            'bar': [3],
+            'baz': 'foobaz',
+            'newkey': {
+                'd': 4
+            }
+        }
+        spack.modules.update_dictionary_extending_lists(target, update)
+        self.assertTrue(len(target) == 4)
+        self.assertTrue(len(target['foo']) == 4)
+        self.assertTrue(len(target['bar']) == 4)
+        self.assertEqual(target['baz'], 'foobaz')
+
+    def test_inspect_path(self):
+        env = spack.modules.inspect_path('/usr')
+        names = [item.name for item in env]
+        self.assertTrue('PATH' in names)
+        self.assertTrue('LIBRARY_PATH' in names)
+        self.assertTrue('LD_LIBRARY_PATH' in names)
+        self.assertTrue('CPATH' in names)
+
 
 class ModuleFileGeneratorTests(MockPackagesTest):
     """
@@ -107,52 +143,52 @@ class TclTests(ModuleFileGeneratorTests):
         }
     }
 
-configuration_prerequisites_direct = {
-    'enable': ['tcl'],
-    'tcl': {
-        'all': {
-            'prerequisites': 'direct'
-        }
-    }
-}
-
-configuration_prerequisites_all = {
-    'enable': ['tcl'],
-    'tcl': {
-        'all': {
-            'prerequisites': 'all'
-        }
-    }
-}
-
-configuration_alter_environment = {
-    'enable': ['tcl'],
-    'tcl': {
-        'all': {
-            'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
-        },
-        'arch=x86-linux': {
-            'environment': {
-                'set': {'FOO': 'foo'},
-                'unset': ['BAR']
+    configuration_prerequisites_direct = {
+        'enable': ['tcl'],
+        'tcl': {
+            'all': {
+                'prerequisites': 'direct'
             }
-        },
-        'arch=x64-linux': {
-            'load': ['foo/bar']
         }
     }
-}
 
-configuration_blacklist = {
-    'enable': ['tcl'],
-    'tcl': {
-        'whitelist': ['zmpi'],
-        'blacklist': ['callpath', 'mpi'],
-        'all': {
-            'autoload': 'direct'
+    configuration_prerequisites_all = {
+        'enable': ['tcl'],
+        'tcl': {
+            'all': {
+                'prerequisites': 'all'
+            }
         }
     }
-}
+
+    configuration_alter_environment = {
+        'enable': ['tcl'],
+        'tcl': {
+            'all': {
+                'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
+            },
+            'arch=x86-linux': {
+                'environment': {
+                    'set': {'FOO': 'foo'},
+                    'unset': ['BAR']
+                }
+            },
+            'arch=x64-linux': {
+                'load': ['foo/bar']
+            }
+        }
+    }
+
+    configuration_blacklist = {
+        'enable': ['tcl'],
+        'tcl': {
+            'whitelist': ['zmpi'],
+            'blacklist': ['callpath', 'mpi'],
+            'all': {
+                'autoload': 'direct'
+            }
+        }
+    }
 
     configuration_conflicts = {
         'enable': ['tcl'],
@@ -164,79 +200,27 @@ configuration_blacklist = {
         }
     }
 
-configuration_wrong_conflicts = {
-    'enable': ['tcl'],
-    'tcl': {
-        'naming_scheme': '{name}/{version}-{compiler.name}',
-        'all': {
-            'conflict': ['{name}/{compiler.name}']
-        }
-    }
-}
-
-configuration_suffix = {
-    'enable': ['tcl'],
-    'tcl': {
-        'mpileaks': {
-            'suffixes': {
-                '+debug': 'foo',
-                '~debug': 'bar'
+    configuration_wrong_conflicts = {
+        'enable': ['tcl'],
+        'tcl': {
+            'naming_scheme': '{name}/{version}-{compiler.name}',
+            'all': {
+                'conflict': ['{name}/{compiler.name}']
             }
         }
     }
-}
 
-
-class HelperFunctionsTests(unittest.TestCase):
-
-    def test_update_dictionary_extending_list(self):
-        target = {
-            'foo': {
-                'a': 1,
-                'b': 2,
-                'd': 4
-            },
-            'bar': [1, 2, 4],
-            'baz': 'foobar'
-        }
-        update = {
-            'foo': {
-                'c': 3,
-            },
-            'bar': [3],
-            'baz': 'foobaz',
-            'newkey': {
-                'd': 4
+    configuration_suffix = {
+        'enable': ['tcl'],
+        'tcl': {
+            'mpileaks': {
+                'suffixes': {
+                    '+debug': 'foo',
+                    '~debug': 'bar'
+                }
             }
         }
-        spack.modules.update_dictionary_extending_lists(target, update)
-        self.assertTrue(len(target) == 4)
-        self.assertTrue(len(target['foo']) == 4)
-        self.assertTrue(len(target['bar']) == 4)
-        self.assertEqual(target['baz'], 'foobaz')
-
-    def test_inspect_path(self):
-        env = spack.modules.inspect_path('/usr')
-        names = [item.name for item in env]
-        self.assertTrue('PATH' in names)
-        self.assertTrue('LIBRARY_PATH' in names)
-        self.assertTrue('LD_LIBRARY_PATH' in names)
-        self.assertTrue('CPATH' in names)
-
-
-class TclTests(MockPackagesTest):
-
-    def setUp(self):
-        super(TclTests, self).setUp()
-        self.configuration_obj = spack.modules.CONFIGURATION
-        spack.modules.open = mock_open
-        # Make sure that a non-mocked configuration will trigger an error
-        spack.modules.CONFIGURATION = None
-
-    def tearDown(self):
-        del spack.modules.open
-        spack.modules.CONFIGURATION = self.configuration_obj
-        super(TclTests, self).tearDown()
+    }
 
     def get_modulefile_content(self, spec):
         spec.concretize()
@@ -267,12 +251,12 @@ class TclTests(MockPackagesTest):
         self.assertEqual(len([x for x in content if 'module load ' in x]), 5)
 
     def test_prerequisites(self):
-        spack.modules.CONFIGURATION = configuration_prerequisites_direct
+        spack.modules.CONFIGURATION = self.configuration_prerequisites_direct
         spec = spack.spec.Spec('mpileaks arch=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'prereq' in x]), 2)
 
-        spack.modules.CONFIGURATION = configuration_prerequisites_all
+        spack.modules.CONFIGURATION = self.configuration_prerequisites_all
         spec = spack.spec.Spec('mpileaks arch=x86-linux')
         content = self.get_modulefile_content(spec)
         self.assertEqual(len([x for x in content if 'prereq' in x]), 5)
@@ -330,11 +314,11 @@ class TclTests(MockPackagesTest):
         self.assertEqual(
             len([x for x in content if x == 'conflict intel/14.0.1']), 1)
 
-        spack.modules.CONFIGURATION = configuration_wrong_conflicts
+        spack.modules.CONFIGURATION = self.configuration_wrong_conflicts
         self.assertRaises(SystemExit, self.get_modulefile_content, spec)
 
     def test_suffixes(self):
-        spack.modules.CONFIGURATION = configuration_suffix
+        spack.modules.CONFIGURATION = self.configuration_suffix
         spec = spack.spec.Spec('mpileaks+debug arch=x86-linux')
         spec.concretize()
         generator = spack.modules.TclModule(spec)
