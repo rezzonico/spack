@@ -126,7 +126,7 @@ class Openmpi(Package):
                        "--enable-shared",
                        "--enable-static"]
         try:
-            hwloc_support = '--with-hwloc=external' if '@external' in spec['hwloc'] else ('--with-hwloc=%s' % spec['hwloc'].prefix),
+            hwloc_support = '--with-hwloc=external' if '@external' in spec['hwloc'] else '--with-hwloc=%s' % spec['hwloc'].prefix
         except KeyError:
             hwloc_support = '--with-hwloc=internal'
 
