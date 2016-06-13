@@ -25,34 +25,14 @@
 from spack import *
 
 
-class Lmod(Package):
-    """
-    Lmod is a Lua based module system that easily handles the MODULEPATH
-    Hierarchical problem. Environment Modules provide a convenient way to
-    dynamically change the users' environment through modulefiles. This
-    includes easily adding or removing directories to the PATH environment
-    variable. Modulefiles for Library packages provide environment variables
-    that specify where the library and header files can be found.
-    """
-    homepage = 'https://www.tacc.utexas.edu/research-development/tacc-projects/lmod'  # NOQA: ignore=E501
-    url = 'https://github.com/TACC/Lmod/archive/6.4.1.tar.gz'
+class PyPly(Package):
+    """PLY is nothing more than a straightforward lex/yacc implementation."""
+    homepage = "http://www.dabeaz.com/ply"
+    url      = "http://www.dabeaz.com/ply/ply-3.8.tar.gz"
 
-    version('6.4.1', '7978ba777c8aa41a4d8c05fec5f780f4')
-    version('6.3.7', '0fa4d5a24c41cae03776f781aa2dedc1')
-    version('6.0.1', '91abf52fe5033bd419ffe2842ebe7af9')
+    version('3.8', '94726411496c52c87c2b9429b12d5c50')
 
-    depends_on('lua@5.2:')
-    depends_on('lua-luaposix')
-    depends_on('lua-luafilesystem')
-
-    parallel = False
-
-    def setup_environment(self, spack_env, run_env):
-        stage_lua_path = join_path(
-            self.stage.path, 'Lmod-{version}', 'src', '?.lua')
-        spack_env.append_path('LUA_PATH', stage_lua_path.format(
-            version=self.version), separator=';')
+    extends('python')
 
     def install(self, spec, prefix):
-        configure('--prefix=%s' % prefix)
-        make('install')
+        python('setup.py', 'install', '--prefix=%s' % prefix)

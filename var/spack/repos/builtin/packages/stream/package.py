@@ -25,34 +25,38 @@
 from spack import *
 
 
-class Lmod(Package):
-    """
-    Lmod is a Lua based module system that easily handles the MODULEPATH
-    Hierarchical problem. Environment Modules provide a convenient way to
-    dynamically change the users' environment through modulefiles. This
-    includes easily adding or removing directories to the PATH environment
-    variable. Modulefiles for Library packages provide environment variables
-    that specify where the library and header files can be found.
-    """
-    homepage = 'https://www.tacc.utexas.edu/research-development/tacc-projects/lmod'  # NOQA: ignore=E501
-    url = 'https://github.com/TACC/Lmod/archive/6.4.1.tar.gz'
+class Stream(Package):
+    """The STREAM benchmark is a simple synthetic benchmark program that
+    measures sustainable memory bandwidth (in MB/s) and the corresponding
+    computation rate for simple vector kernels."""
 
-    version('6.4.1', '7978ba777c8aa41a4d8c05fec5f780f4')
-    version('6.3.7', '0fa4d5a24c41cae03776f781aa2dedc1')
-    version('6.0.1', '91abf52fe5033bd419ffe2842ebe7af9')
+    homepage = "https://www.cs.virginia.edu/stream/ref.html"
 
-    depends_on('lua@5.2:')
-    depends_on('lua-luaposix')
-    depends_on('lua-luafilesystem')
+    version('5.10', git='https://github.com/jeffhammond/STREAM.git')
 
-    parallel = False
+    variant('openmp', default=False, description='Build with OpenMP support')
 
-    def setup_environment(self, spack_env, run_env):
-        stage_lua_path = join_path(
-            self.stage.path, 'Lmod-{version}', 'src', '?.lua')
-        spack_env.append_path('LUA_PATH', stage_lua_path.format(
-            version=self.version), separator=';')
+    def patch(self):
+        makefile = FileFilter('Makefile')
+
+        # Use the Spack compiler wrappers
+        makefile.filter('CC = .*', 'CC = cc')
+        makefile.filter('FC = .*', 'FC = f77')
+
+        cflags = '-O2'
+        fflags = '-O2'
+        if '+openmp' in self.spec:
+            cflags += ' ' + self.compiler.openmp_flag
+            fflags += ' ' + self.compiler.openmp_flag
+
+        # Set the appropriate flags for this compiler
+        makefile.filter('CFLAGS = .*', 'CFLAGS = {0}'.format(cflags))
+        makefile.filter('FFLAGS = .*', 'FFLAGS = {0}'.format(fflags))
 
     def install(self, spec, prefix):
-        configure('--prefix=%s' % prefix)
-        make('install')
+        make()
+
+        # Manual installation
+        mkdir(prefix.bin)
+        install('stream_c.exe', prefix.bin)
+        install('stream_f.exe', prefix.bin)

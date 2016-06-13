@@ -22,31 +22,39 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
-from spack import *
 
 
-class Astyle(Package):
-    """
-    A Free, Fast, and Small Automatic Formatter for C, C++, C++/CLI,
-    Objective-C, C#, and Java Source Code.
-    """
-    homepage = "http://astyle.sourceforge.net/"
-    url      = "http://downloads.sourceforge.net/project/astyle/astyle/astyle%202.04/astyle_2.04_linux.tar.gz"
+import spack.cmd.find
+import unittest
 
-    version('2.04', '30b1193a758b0909d06e7ee8dd9627f6')
 
-    def install(self, spec, prefix):
+class Bunch(object):
 
-        with working_dir('src'):
-            # we need to edit the makefile in place to set compiler:
-            make_file = join_path(self.stage.source_path,
-                                  'build', 'gcc', 'Makefile')
-            filter_file(r'^CXX\s*=.*', 'CXX=%s' % spack_cxx, make_file)
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
-            make('-f',
-                 make_file,
-                 parallel=False)
 
-            mkdirp(self.prefix.bin)
-            install(join_path(self.stage.source_path, 'src', 'bin', 'astyle'),
-                    self.prefix.bin)
+class FindTest(unittest.TestCase):
+
+    def test_query_arguments(self):
+        query_arguments = spack.cmd.find.query_arguments
+        # Default arguments
+        args = Bunch(only_missing=False, missing=False,
+                     unknown=False, explicit=False, implicit=False)
+        q_args = query_arguments(args)
+        self.assertTrue('installed' in q_args)
+        self.assertTrue('known' in q_args)
+        self.assertTrue('explicit' in q_args)
+        self.assertEqual(q_args['installed'], True)
+        self.assertEqual(q_args['known'], any)
+        self.assertEqual(q_args['explicit'], any)
+        # Check that explicit works correctly
+        args.explicit = True
+        q_args = query_arguments(args)
+        self.assertEqual(q_args['explicit'], True)
+        args.explicit = False
+        args.implicit = True
+        q_args = query_arguments(args)
+        self.assertEqual(q_args['explicit'], False)
+        args.explicit = True
+        self.assertRaises(SystemExit, query_arguments, args)
