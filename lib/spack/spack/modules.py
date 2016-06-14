@@ -587,7 +587,8 @@ class LmodModule(EnvModule):
 
     family_format = 'family("{family}")\n'
 
-    path_part = join_path('{token.name}', '{token.version}')
+    path_part_with_hash = join_path('{token.name}', '{token.version}-{token.hash}')  # NOQA: ignore=E501
+    path_part_without_hash = join_path('{token.name}', '{token.version}')
 
     # TODO : Check that extra tokens specified in configuration file
     # TODO : are actually virtual dependencies
@@ -648,9 +649,16 @@ class LmodModule(EnvModule):
                 yield item
 
     def token_to_path(self, name, value):
+        # If we are dealing with a core compiler, return 'Core'
         if name == 'compiler' and str(value) in self.core_compilers:
             return 'Core'
-        return self.path_part.format(token=value)
+        # CompilerSpec does not have an hash
+        if name == 'compiler':
+            return self.path_part_without_hash.format(token=value)
+        # For virtual providers add a small part of the hash
+        # to distinguish among different variants in a directory hierarchy
+        value.hash = value.dag_hash(length=6)
+        return self.path_part_with_hash.format(token=value)
 
     @property
     def file_name(self):
@@ -663,8 +671,7 @@ class LmodModule(EnvModule):
 
     @property
     def use_name(self):
-        return self.token_to_path('', self.spec) + '-' + self.spec.dag_hash(
-            length=6)
+        return self.token_to_path('', self.spec)
 
     def modulepath_modifications(self):
         # What is available is what we require plus what we provide
@@ -691,10 +698,11 @@ class LmodModule(EnvModule):
 
         def set_variables_for_service(env, x):
             upper = x.upper()
-            env.set('LMOD_{upper}_NAME'.format(upper=upper),
-                    self.provides[x].name)
-            env.set('LMOD_{upper}_VERSION'.format(upper=upper),
-                    self.provides[x].version)
+            s = self.provides[x]
+            name, version = os.path.split(self.token_to_path(x, s))
+
+            env.set('LMOD_{upper}_NAME'.format(upper=upper), name)
+            env.set('LMOD_{upper}_VERSION'.format(upper=upper), version)
 
         def conditional_modulepath_modifications(item):
             entry = 'if '
