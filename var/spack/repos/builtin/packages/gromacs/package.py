@@ -48,9 +48,9 @@ class Gromacs(Package):
     variant('double', default=False, description='Produces a double precision version of the executables')
 
     depends_on('mpi', when='+mpi')
-
     depends_on('fftw')
 
+    depends_on('cmake')  # build dependency
     # TODO : add GPU support
 
     def install(self, spec, prefix):
