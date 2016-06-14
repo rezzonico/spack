@@ -23,7 +23,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
 import os
-import glob
 import shutil
 
 from spack import *
@@ -46,15 +45,15 @@ class Llvm(Package):
 
     variant('debug', default=False, description="Build a debug version of LLVM, this increases binary size by an order of magnitude, make sure you have 20-30gb of space available to build this")  # NOQA: ignore=E501
     variant('clang', default=True, description="Build the LLVM C/C++/Objective-C compiler frontend")  # NOQA: ignore=E501
-    variant('lldb', default=True, description="Build the LLVM debugger")
-    variant('internal_unwind', default=True, description="Build the libcxxabi libunwind")
-    variant('polly', default=True, description="Build the LLVM polyhedral optimization plugin, only builds for 3.7.0+")
-    variant('libcxx', default=True, description="Build the LLVM C++ standard library")
-    variant('compiler-rt', default=True, description="Build the LLVM compiler runtime, including sanitizers")
-    variant('gold', default=True, description="Add support for LTO with the gold linker plugin")
-    variant('shared_libs', default=False, description="Build all components as shared libraries, faster, less memory to build, less stable")
-    variant('link_dylib', default=False, description="Build and link the libLLVM shared library rather than static")
-    variant('all_targets', default=True, description="Build all supported targets, default targets <current arch>,NVPTX,AMDGPU,CppBackend")
+    variant('lldb', default=True, description="Build the LLVM debugger")  # NOQA: ignore=E501
+    variant('internal_unwind', default=True, description="Build the libcxxabi libunwind")  # NOQA: ignore=E501
+    variant('polly', default=True, description="Build the LLVM polyhedral optimization plugin, only builds for 3.7.0+")  # NOQA: ignore=E501
+    variant('libcxx', default=True, description="Build the LLVM C++ standard library")  # NOQA: ignore=E501
+    variant('compiler-rt', default=True, description="Build the LLVM compiler runtime, including sanitizers")  # NOQA: ignore=E501
+    variant('gold', default=True, description="Add support for LTO with the gold linker plugin")  # NOQA: ignore=E501
+    variant('shared_libs', default=False, description="Build all components as shared libraries, faster, less memory to build, less stable")  # NOQA: ignore=E501
+    variant('link_dylib', default=False, description="Build and link the libLLVM shared library rather than static")  # NOQA: ignore=E501
+    variant('all_targets', default=True, description="Build all supported targets, default targets <current arch>,NVPTX,AMDGPU,CppBackend")  # NOQA: ignore=E501
 
     # Build dependency
     depends_on('cmake @2.8.12.2:')
@@ -74,7 +73,7 @@ class Llvm(Package):
     depends_on('gmp', when='@:3.6.999 +polly')
     depends_on('isl', when='@:3.6.999 +polly')
 
-    base_url = 'http://llvm.org/releases/%%(version)s/%(pkg)s-%%(version)s.src.tar.xz'   # NOQA: ignore=E501
+    base_url = 'http://llvm.org/releases/%%(version)s/%(pkg)s-%%(version)s.src.tar.xz'  # NOQA: ignore=E501
     llvm_url = base_url % {'pkg': 'llvm'}
 
     resources = {
@@ -94,32 +93,32 @@ class Llvm(Package):
             'placement': 'libcxx',
         },
         'libcxxabi': {
-            'url': base_url % {'pkg': 'libcxxabi'},
+            'url':  base_url % {'pkg': 'libcxxabi'},
             'destination': 'projects',
             'placement': 'libcxxabi',
         },
         'clang': {
-            'url': base_url % {'pkg': 'cfe'},
+            'url':  base_url % {'pkg': 'cfe'},
             'destination': 'tools',
             'placement': 'clang',
         },
         'clang-tools-extra': {
-            'url': base_url % {'pkg': 'clang-tools-extra'},
+            'url':  base_url % {'pkg': 'clang-tools-extra'},
             'destination': 'tools/clang/tools',
             'placement': 'extra',
         },
         'lldb': {
-            'url': base_url % {'pkg': 'lldb'},
+            'url':  base_url % {'pkg': 'lldb'},
             'destination': 'tools',
             'placement': 'lldb',
         },
         'polly': {
-            'url': base_url % {'pkg': 'polly'},
+            'url':  base_url % {'pkg': 'polly'},
             'destination': 'tools',
             'placement': 'polly',
         },
         'llvm-libunwind': {
-            'url': base_url % {'pkg': 'libunwind'},
+            'url':  base_url % {'pkg': 'libunwind'},
             'destination': 'projects',
             'placement': 'libunwind',
         },
@@ -128,21 +127,17 @@ class Llvm(Package):
         {
             'version': 'trunk',
             'repo': 'http://llvm.org/svn/llvm-project/llvm/trunk',
-            'resources': {
-                'compiler-rt':
-                'http://llvm.org/svn/llvm-project/compiler-rt/trunk',
-                'openmp': 'http://llvm.org/svn/llvm-project/openmp/trunk',
-                'polly': 'http://llvm.org/svn/llvm-project/polly/trunk',
-                'libcxx': 'http://llvm.org/svn/llvm-project/libcxx/trunk',
-                'libcxxabi':
-                'http://llvm.org/svn/llvm-project/libcxxabi/trunk',
-                'clang': 'http://llvm.org/svn/llvm-project/cfe/trunk',
-                'clang-tools-extra':
-                'http://llvm.org/svn/llvm-project/clang-tools-extra/trunk',
-                'lldb': 'http://llvm.org/svn/llvm-project/lldb/trunk',
-                'llvm-libunwind':
-                'http://llvm.org/svn/llvm-project/libunwind/trunk',
-            }
+                    'resources': {
+                        'compiler-rt': 'http://llvm.org/svn/llvm-project/compiler-rt/trunk',  # NOQA: ignore=E501
+                        'openmp': 'http://llvm.org/svn/llvm-project/openmp/trunk',  # NOQA: ignore=E501
+                        'polly': 'http://llvm.org/svn/llvm-project/polly/trunk',  # NOQA: ignore=E501
+                        'libcxx': 'http://llvm.org/svn/llvm-project/libcxx/trunk',  # NOQA: ignore=E501
+                        'libcxxabi': 'http://llvm.org/svn/llvm-project/libcxxabi/trunk',  # NOQA: ignore=E501
+                        'clang': 'http://llvm.org/svn/llvm-project/cfe/trunk',
+                        'clang-tools-extra': 'http://llvm.org/svn/llvm-project/clang-tools-extra/trunk',  # NOQA: ignore=E501
+                        'lldb': 'http://llvm.org/svn/llvm-project/lldb/trunk',
+                        'llvm-libunwind': 'http://llvm.org/svn/llvm-project/libunwind/trunk',  # NOQA: ignore=E501
+                    }
         },
         {
             'version': '3.8.0',
@@ -171,7 +166,7 @@ class Llvm(Package):
                 'clang': '0acd026b5529164197563d135a8fd83e',
                 'clang-tools-extra': '5d49ff745037f061a7c86aeb6a24c3d2',
                 'lldb': 'a106d8a0d21fc84d76953822fbaf3398',
-                'llvm-libunwind': '814bd52c9247c5d04629658fbcb3ab8c',
+                        'llvm-libunwind': '814bd52c9247c5d04629658fbcb3ab8c',
             }
         },
         {
@@ -186,7 +181,7 @@ class Llvm(Package):
                 'clang': '8f9d27335e7331cf0a4711e952f21f01',
                 'clang-tools-extra': 'd5a87dacb65d981a427a536f6964642e',
                 'lldb': 'e5931740400d1dc3e7db4c7ba2ceff68',
-                'llvm-libunwind': '9a75392eb7eb8ed5c0840007e212baf5',
+                        'llvm-libunwind': '9a75392eb7eb8ed5c0840007e212baf5',
             }
         },
         {
@@ -244,15 +239,15 @@ class Llvm(Package):
 
         build_type = 'RelWithDebInfo' if '+debug' in spec else 'Release'
         cmake_args.extend([
-            '..', '-DCMAKE_BUILD_TYPE=' + build_type,
+            '..',
+            '-DCMAKE_BUILD_TYPE=' + build_type,
             '-DLLVM_REQUIRES_RTTI:BOOL=ON',
             '-DCLANG_DEFAULT_OPENMP_RUNTIME:STRING=libomp',
-            '-DPYTHON_EXECUTABLE:PATH=%s/bin/python' % spec['python'].prefix
-        ])
+            '-DPYTHON_EXECUTABLE:PATH=%s/bin/python' % spec['python'].prefix])
 
         if '+gold' in spec:
-            cmake_args.append('-DLLVM_BINUTILS_INCDIR=' + os.path.join(spec[
-                'binutils'].prefix, 'include'))
+            cmake_args.append('-DLLVM_BINUTILS_INCDIR=' +
+                              os.path.join(spec['binutils'].prefix, 'include'))
         if '+polly' in spec:
             cmake_args.append('-DLINK_POLLY_INTO_TOOLS:Bool=ON')
         else:
@@ -276,7 +271,7 @@ class Llvm(Package):
         if '+link_dylib' in spec:
             cmake_args.append('-DLLVM_LINK_LLVM_DYLIB:Bool=ON')
 
-        if '+all_targets' not in spec: # all is default on cmake
+        if '+all_targets' not in spec:  # all is default on cmake
             targets = ['CppBackend', 'NVPTX', 'AMDGPU']
             if 'x86' in spec.architecture.lower():
                 targets.append('X86')
@@ -290,7 +285,8 @@ class Llvm(Package):
                   'power' in spec.architecture.lower()):
                 targets.append('PowerPC')
 
-            cmake_args.append('-DLLVM_TARGETS_TO_BUILD:Bool=' + ';'.join(targets))
+            cmake_args.append(
+                '-DLLVM_TARGETS_TO_BUILD:Bool=' + ';'.join(targets))
 
         if '+clang' not in spec:
             if '+clang_extra' in spec:
