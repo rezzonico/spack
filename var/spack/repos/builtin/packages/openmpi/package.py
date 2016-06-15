@@ -99,7 +99,6 @@ class Openmpi(Package):
     provides('mpi@:2.2', when='@1.6.5')
     provides('mpi@:3.0', when='@1.7.5:')
 
-    depends_on('hwloc')
     depends_on('sqlite', when='+sqlite3')
 
     def url_for_version(self, version):
@@ -129,7 +128,7 @@ class Openmpi(Package):
 
     def install(self, spec, prefix):
         config_args = ["--prefix=%s" % prefix,
-                       "--with-hwloc=%s" % spec['hwloc'].prefix,
+                       "--with-hwloc=internal",
                        "--enable-shared",
                        "--enable-static"]
         # Variant based arguments
