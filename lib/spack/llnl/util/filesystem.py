@@ -27,8 +27,8 @@ __all__ = ['set_install_permissions', 'install', 'install_tree', 'traverse_tree'
            'force_remove', 'join_path', 'ancestor', 'can_access', 'filter_file',
            'FileFilter', 'change_sed_delimiter', 'is_exe', 'force_symlink',
            'set_executable', 'copy_mode', 'unset_executable_mode',
-           'remove_dead_links', 'remove_linked_tree', 'find_library_path',
-           'fix_darwin_install_name']
+           'remove_dead_links', 'remove_if_dead_link', 'remove_linked_tree',
+           'find_library_path', 'fix_darwin_install_name']
 
 import os
 import glob
@@ -374,10 +374,21 @@ def remove_dead_links(root):
     """
     for file in os.listdir(root):
         path = join_path(root, file)
-        if os.path.islink(path):
-            real_path = os.path.realpath(path)
-            if not os.path.exists(real_path):
-                os.unlink(path)
+        remove_if_dead_link(path)
+
+
+def remove_if_dead_link(path):
+    """
+    Removes the argument if it is a dead link, does nothing otherwise
+
+    Args:
+        path: the potential dead link
+    """
+    if os.path.islink(path):
+        real_path = os.path.realpath(path)
+        if not os.path.exists(real_path):
+            os.unlink(path)
+
 
 def remove_linked_tree(path):
     """
