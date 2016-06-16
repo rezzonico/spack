@@ -148,7 +148,7 @@ class Openmpi(Package):
         ])
         if '+verbs' in spec:
             path = _verbs_dir()
-            if path is not None and path not in ('/usr', '/usr/local'):
+            if path is not None:
                 config_args.append('--with-%s=%s' % (self.verbs, path))
             else:
                 config_args.append('--with-%s' % self.verbs)
