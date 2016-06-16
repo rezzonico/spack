@@ -22,35 +22,30 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
+
+import sys
+
 from spack import *
 
+class CBlosc(Package):
+    """Blosc, an extremely fast, multi-threaded, meta-compressor library"""
+    homepage = "http://www.blosc.org"
+    url      = "https://github.com/Blosc/c-blosc/archive/v1.9.2.tar.gz"
 
-class Serf(Package):
-    """Apache Serf - a high performance C-based HTTP client library
-    built upon the Apache Portable Runtime (APR) library"""
-    homepage  = 'https://serf.apache.org/'
-    url       = 'https://archive.apache.org/dist/serf/serf-1.3.8.tar.bz2'
+    version('1.9.2', 'dd2d83069d74b36b8093f1c6b49defc5')
+    version('1.9.1', '7d708d3daadfacf984a87b71b1734ce2')
+    version('1.9.0', 'e4c1dc8e2c468e5cfa2bf05eeee5357a')
+    version('1.8.1', 'd73d5be01359cf271e9386c90dcf5b05')
+    version('1.8.0', '5b92ecb287695ba20cc33d30bf221c4f')
 
-    version('1.3.8',     '1d45425ca324336ce2f4ae7d7b4cfbc5567c5446')
-
-    depends_on('apr')
-    depends_on('apr-util')
-    depends_on('scons')
-    depends_on('expat')
-    depends_on('openssl')
-    depends_on('zlib')
+    depends_on("cmake")
+    depends_on("snappy")
+    depends_on("zlib")
 
     def install(self, spec, prefix):
-        scons = which("scons")
+        cmake('.', *std_cmake_args)
 
-        options = ['PREFIX=%s' % prefix]
-        options.append('APR=%s' % spec['apr'].prefix)
-        options.append('APU=%s' % spec['apr-util'].prefix)
-        options.append('OPENSSL=%s' % spec['openssl'].prefix)
-        options.append('LINKFLAGS=-L%s/lib -L%s/lib' %
-                       (spec['expat'].prefix, spec['zlib'].prefix))
-        options.append('CPPFLAGS=-I%s/include -I%s/include' %
-                       (spec['expat'].prefix, spec['zlib'].prefix))
-
-        scons(*options)
-        scons('install')
+        make()
+        make("install")
+        if sys.platform == 'darwin':
+            fix_darwin_install_name(prefix.lib)
