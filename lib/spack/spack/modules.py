@@ -359,7 +359,7 @@ class EnvModule(object):
 
         # Environment modifications guessed by inspecting the
         # installation prefix
-        env = inspect_path(self.spec.prefix)
+        env = inspect_path(self.spec.package.prefix)
 
         # Let the extendee/dependency modify their extensions/dependencies
         # before asking for package-specific modifications
