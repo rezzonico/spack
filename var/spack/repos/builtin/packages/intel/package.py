@@ -1,5 +1,7 @@
 from spack import *
 
+import spack.environment
+
 class Intel(Package):
     """
     Mock package for Intel compilers
