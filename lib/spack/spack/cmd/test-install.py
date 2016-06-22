@@ -148,7 +148,8 @@ def install_single_spec(spec, number_of_jobs):
     package = spack.repo.get(spec)
 
     # If it is already installed, skip the test
-    if spack.repo.get(spec).installed:
+    entry = spack.repo.get(spec)
+    if entry.installed and not entry.spec.external:
         testcase = TestCase(package.name, package.spec.short_spec, time=0.0)
         testcase.set_result(TestResult.SKIPPED, message='Skipped [already installed]', error_type='already_installed')
         return testcase
@@ -167,7 +168,8 @@ def install_single_spec(spec, number_of_jobs):
                            ignore_deps=False,
                            make_jobs=number_of_jobs,
                            verbose=True,
-                           fake=False)
+                           fake=False,
+                           explicit=True)
         duration = time.time() - start_time
         testcase = TestCase(package.name, package.spec.short_spec, duration)
         testcase.set_result(TestResult.PASSED)
