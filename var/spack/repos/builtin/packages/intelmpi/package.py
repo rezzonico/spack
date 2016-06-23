@@ -22,6 +22,14 @@ class Intelmpi(Package):
         if '%intel' not in spec:
             raise InstallError('IntelMPI : must use intel compiler')
 
+    def setup_dependent_package(self, module, dep_spec):
+        # FIXME : This is done in the wrong way
+        # FIXME : It should be dep_spec not self.spec
+        self.spec.mpicc = join_path(self.prefix.bin, 'mpiicc')
+        self.spec.mpicxx = join_path(self.prefix.bin, 'mpiicpc')
+        self.spec.mpifc = join_path(self.prefix.bin, 'mpiifort')
+        self.spec.mpif77 = join_path(self.prefix.bin, 'mpiifort')
+
     def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
         """
         For dependencies, make mpicc's use spack wrapper.
