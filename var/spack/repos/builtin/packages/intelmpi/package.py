@@ -25,10 +25,10 @@ class Intelmpi(Package):
     def setup_dependent_package(self, module, dep_spec):
         # FIXME : This is done in the wrong way
         # FIXME : It should be dep_spec not self.spec
-        self.spec.mpicc = join_path(self.prefix.bin, 'mpiicc')
-        self.spec.mpicxx = join_path(self.prefix.bin, 'mpiicpc')
-        self.spec.mpifc = join_path(self.prefix.bin, 'mpiifort')
-        self.spec.mpif77 = join_path(self.prefix.bin, 'mpiifort')
+        self.spec.mpicc = join_path(self.prefix, 'bin64', 'mpiicc')
+        self.spec.mpicxx = join_path(self.prefix, 'bin64', 'mpiicpc')
+        self.spec.mpifc = join_path(self.prefix, 'bin64', 'mpiifort')
+        self.spec.mpif77 = join_path(self.prefix, 'bin64', 'mpiifort')
 
     def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
         """
