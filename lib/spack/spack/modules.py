@@ -291,15 +291,20 @@ class EnvModule(object):
         parts = name.split('/')
         name = join_path(*parts)
         # Add optional suffixes based on constraints
-        configuration, _ = parse_config_options(self)
         suffixes = [name]
-        for constraint, suffix in configuration.get('suffixes', {}).items():
-            if constraint in self.spec:
-                suffixes.append(suffix)
+        suffixes.extend(self._get_suffixes())
         # Always append the hash to make the module file unique
         suffixes.append(self.spec.dag_hash())
         name = '-'.join(suffixes)
         return name
+
+    def _get_suffixes(self):
+        configuration, _ = parse_config_options(self)
+        suffixes = []
+        for constraint, suffix in configuration.get('suffixes', {}).items():
+            if constraint in self.spec:
+                suffixes.append(suffix)
+        return suffixes
 
     @property
     def category(self):
@@ -359,7 +364,7 @@ class EnvModule(object):
 
         # Environment modifications guessed by inspecting the
         # installation prefix
-        env = inspect_path(self.spec.prefix)
+        env = inspect_path(self.spec.package.prefix)
 
         # Let the extendee/dependency modify their extensions/dependencies
         # before asking for package-specific modifications
@@ -670,7 +675,9 @@ class LmodModule(EnvModule):
             return self.path_part_without_hash.format(token=value)
         # For virtual providers add a small part of the hash
         # to distinguish among different variants in a directory hierarchy
-        value.hash = value.dag_hash(length=6)
+        suffixes = self._get_suffixes() if name == '' else []
+        suffixes.append(value.dag_hash(length=6))
+        value.hash = '-'.join(suffixes)
         return self.path_part_with_hash.format(token=value)
 
     @property

@@ -54,6 +54,7 @@ import spack.mirror
 import spack.repository
 import spack.url
 import spack.util.web
+import spack.util.prefix
 from StringIO import StringIO
 from llnl.util.filesystem import *
 from llnl.util.lang import *
@@ -659,7 +660,11 @@ class Package(object):
 
     @property
     def installed(self):
-        return os.path.isdir(self.prefix)
+        try:
+            rec = spack.installed_db.get_record(self.spec)
+            return rec.path
+        except KeyError:
+            return os.path.isdir(self.prefix)
 
     @property
     def installed_dependents(self):
@@ -695,8 +700,14 @@ class Package(object):
 
     @property
     def prefix(self):
-        """Get the prefix into which this package should be installed."""
-        return self.spec.prefix
+        """
+        Get the prefix into which this package should be or is installed
+        """
+        try:
+            rec = spack.installed_db.get_record(self.spec)
+            return spack.util.prefix.Prefix(rec.path)
+        except KeyError:
+            return self.spec.prefix
 
     @property
     def compiler(self):
@@ -920,8 +931,25 @@ class Package(object):
 
         # No installation needed if package is external
         if self.spec.external:
-            tty.msg("%s is externally installed in %s" %
-                    (self.name, self.spec.external))
+            message = '{s.name}@{s.version} : externally installed in {path}'
+            tty.msg(message.format(s=self, path=self.spec.external))
+            try:
+                # Check if the package was already registered in the DB
+                # If this is the case, then just exit
+                rec = spack.installed_db.get_record(self.spec)
+                message = '{s.name}@{s.version} : already registered in DB'
+                tty.msg(message.format(s=self))
+            except KeyError:
+                # If not register it and generate the module file
+                # For external packages we just need to run
+                # post-install hooks to generate module files
+                message = '{s.name}@{s.version} : generating module file'
+                tty.msg(message.format(s=self))
+                spack.hooks.post_install(self)
+                # Add to the DB
+                message = '{s.name}@{s.version} : registering into DB'
+                tty.msg(message.format(s=self))
+                spack.installed_db.add(self.spec, self.prefix, explicit=explicit, external=True)
             return
 
         # Ensure package is not already installed
@@ -1223,6 +1251,8 @@ class Package(object):
         with self._prefix_write_lock():
             spack.hooks.pre_uninstall(self)
             # Uninstalling in Spack only requires removing the prefix.
+            # TODO : check if this is worth refactoring to be done
+            # TODO : only on external packages...
             self.remove_prefix()
             #
             spack.installed_db.remove(self.spec)

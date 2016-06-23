@@ -298,5 +298,5 @@ class Llvm(Package):
             cmake(*cmake_args)
             make()
             make("install")
-            cp = which('cp')
-            cp('-a', 'bin/', prefix)
+            #cp = which('cp')
+            #cp('-a', 'bin/', prefix)

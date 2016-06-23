@@ -58,9 +58,9 @@ from yaml.error import MarkedYAMLError, YAMLError
 _db_dirname = '.spack-db'
 
 # DB version.  This is stuck in the DB file to track changes in format.
-_db_version = Version('0.9.1')
+_db_version = Version('0.9.2')
 
-# Default timeout for spack database locks is 5 min.
+# Default timeout for spack database locks is 1 min.
 _db_lock_timeout = 60
 
 
@@ -93,12 +93,13 @@ class InstallRecord(object):
 
     """
 
-    def __init__(self, spec, path, installed, ref_count=0, explicit=False):
+    def __init__(self, spec, path, installed, ref_count=0, explicit=False, external=False):
         self.spec = spec
         self.path = str(path)
         self.installed = bool(installed)
         self.ref_count = ref_count
         self.explicit = explicit
+        self.external = external
 
     def to_dict(self):
         return {
@@ -106,14 +107,15 @@ class InstallRecord(object):
             'path': self.path,
             'installed': self.installed,
             'ref_count': self.ref_count,
-            'explicit': self.explicit
+            'explicit': self.explicit,
+            'external': self.external
         }
 
     @classmethod
     def from_dict(cls, spec, dictionary):
         d = dictionary
         return InstallRecord(spec, d['path'], d['installed'], d['ref_count'],
-                             d.get('explicit', False))
+                             d['explicit'], d['external'])
 
 
 class Database(object):
@@ -293,7 +295,8 @@ class Database(object):
         self._data = data
 
     def reindex(self, directory_layout):
-        """Build database index from scratch based from a directory layout.
+        """
+        Build database index from scratch based from a directory layout.
 
         Locks the DB if it isn't locked already.
 
@@ -302,7 +305,22 @@ class Database(object):
             old_data = self._data
             try:
                 self._data = {}
+                restored_from_old_data = []
+                for key, entry in old_data.items():
+                    try:
+                        kwargs = {
+                            'spec': entry.spec,
+                            'path': entry.path,
+                            'external': entry.external,
+                            'explicit': entry.explicit
+                        }
+                        self._add(**kwargs)
+                        restored_from_old_data.append(entry.spec)
+                    except Exception:
+                        # Something went wrong, so the spec was not restored from old data
+                        pass
 
+                missing_specs = [spec for spec in directory_layout.all_specs() if spec not in restored_from_old_data]
                 # Ask the directory layout to traverse the filesystem.
                 for spec in directory_layout.all_specs():
                     # Create a spec for each known package and add it.
@@ -374,7 +392,7 @@ class Database(object):
             # reindex() takes its own write lock, so no lock here.
             self.reindex(spack.install_layout)
 
-    def _add(self, spec, path, directory_layout=None, explicit=False):
+    def _add(self, spec, path, directory_layout=None, explicit=False, external=False):
         """Add an install record for spec at path to the database.
 
         This assumes that the spec is not already installed. It
@@ -399,7 +417,8 @@ class Database(object):
             self._data[key] = InstallRecord(spec,
                                             path,
                                             True,
-                                            explicit=explicit)
+                                            explicit=explicit,
+                                            external=external)
             for dep in spec.dependencies.values():
                 self._increment_ref_count(dep, directory_layout)
 
@@ -421,7 +440,7 @@ class Database(object):
         self._data[key].ref_count += 1
 
     @_autospec
-    def add(self, spec, path, explicit=False):
+    def add(self, spec, path, explicit=False, external=False):
         """Add spec at path to database, locking and reading DB to sync.
 
         ``add()`` will lock and read from the DB on disk.
@@ -430,7 +449,7 @@ class Database(object):
         # TODO: ensure that spec is concrete?
         # Entire add is transactional.
         with self.write_transaction():
-            self._add(spec, path, explicit=explicit)
+            self._add(spec, path, explicit=explicit, external=external)
 
     def _get_matching_spec_key(self, spec, **kwargs):
         """Get the exact spec OR get a single spec that matches."""
