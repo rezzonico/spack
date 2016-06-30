@@ -261,6 +261,7 @@ class EnvModule(object):
         if self.spec.package.__doc__:
             self.long_description = re.sub(r'\s+', ' ',
                                            self.spec.package.__doc__)
+            self.long_description += '\n\nspec : ' + str(self.spec) + '\n'
 
     @property
     def naming_scheme(self):
