@@ -294,10 +294,6 @@ class EnvModule(object):
         # Add optional suffixes based on constraints
         suffixes = [name]
         suffixes.extend(self._get_suffixes())
-        # Always append the hash to make the module file unique
-        hash_length = configuration.pop('hash_length', 7)
-        if hash_length != 0:
-            suffixes.append(self.spec.dag_hash(length=hash_length))
         name = '-'.join(suffixes)
         return name
 
@@ -307,6 +303,10 @@ class EnvModule(object):
         for constraint, suffix in configuration.get('suffixes', {}).items():
             if constraint in self.spec:
                 suffixes.append(suffix)
+        # Always append the hash to make the module file unique
+        hash_length = configuration.pop('hash_length', 7)
+        if hash_length != 0:
+            suffixes.append(self.spec.dag_hash(length=hash_length))
         return suffixes
 
     @property
@@ -686,9 +686,15 @@ class LmodModule(EnvModule):
         # For virtual providers add a small part of the hash
         # to distinguish among different variants in a directory hierarchy
         suffixes = self._get_suffixes() if name == '' else []
-        suffixes.append(value.dag_hash(length=6))
+        # Path part for a provider
+        if name in self.hierarchy_tokens:
+            suffixes.append(value.dag_hash(length=7))
+
         value.hash = '-'.join(suffixes)
-        return self.path_part_with_hash.format(token=value)
+
+        if value.hash:
+            return self.path_part_with_hash.format(token=value)
+        return self.path_part_without_hash.format(token=value)
 
     @property
     def file_name(self):
