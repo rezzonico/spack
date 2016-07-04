@@ -53,6 +53,8 @@ class Eigen(Package):
     depends_on('mpfr@2.3.0:')  # Eigen 3.2.7 requires at least 2.3.0
     depends_on('gmp')
 
+    parallel = False
+
     def install(self, spec, prefix):
 
         options = []
