@@ -25,6 +25,7 @@
 from spack import *
 import sys
 
+
 class Glib(Package):
     """The GLib package contains a low-level libraries useful for
        providing data structure handling for C, portability wrappers
@@ -39,6 +40,10 @@ class Glib(Package):
     depends_on("zlib")
     depends_on("pkg-config")
     depends_on('gettext', sys.platform=='darwin')
+
+    # Disabling parallel build as they may be a source of troubles
+    # with Intel licenses
+    parallel = False
 
     def install(self, spec, prefix):
         configure("--prefix=%s" % prefix)
