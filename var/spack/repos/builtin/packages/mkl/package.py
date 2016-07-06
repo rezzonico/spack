@@ -21,4 +21,4 @@ class Mkl(Package):
         """
         For dependencies, make mpicc's use spack wrapper.
         """
-        pass
+        spack_env.set('MKLROOT', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
