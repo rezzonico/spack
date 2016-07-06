@@ -190,6 +190,7 @@ def parse_config_options(module_generator):
     #####
 
     # Automatic loading loads
+    module_file_actions['hash_length'] = module_configuration.get('hash_length', 7)
     module_file_actions['autoload'] = dependencies(
         module_generator.spec, module_file_actions.get('autoload', 'none'))
     # Prerequisites
@@ -260,6 +261,7 @@ class EnvModule(object):
         if self.spec.package.__doc__:
             self.long_description = re.sub(r'\s+', ' ',
                                            self.spec.package.__doc__)
+            self.long_description += '\n\nspec : ' + str(self.spec) + '\n'
 
     @property
     def naming_scheme(self):
@@ -291,15 +293,22 @@ class EnvModule(object):
         parts = name.split('/')
         name = join_path(*parts)
         # Add optional suffixes based on constraints
-        configuration, _ = parse_config_options(self)
         suffixes = [name]
+        suffixes.extend(self._get_suffixes())
+        name = '-'.join(suffixes)
+        return name
+
+    def _get_suffixes(self):
+        configuration, _ = parse_config_options(self)
+        suffixes = []
         for constraint, suffix in configuration.get('suffixes', {}).items():
             if constraint in self.spec:
                 suffixes.append(suffix)
         # Always append the hash to make the module file unique
-        suffixes.append(self.spec.dag_hash())
-        name = '-'.join(suffixes)
-        return name
+        hash_length = configuration.pop('hash_length', 7)
+        if hash_length != 0:
+            suffixes.append(self.spec.dag_hash(length=hash_length))
+        return suffixes
 
     @property
     def category(self):
@@ -340,7 +349,7 @@ class EnvModule(object):
 
         return False
 
-    def write(self):
+    def write(self, overwrite=False):
         """
         Writes out a module file for this object.
 
@@ -359,7 +368,7 @@ class EnvModule(object):
 
         # Environment modifications guessed by inspecting the
         # installation prefix
-        env = inspect_path(self.spec.prefix)
+        env = inspect_path(self.spec.package.prefix)
 
         # Let the extendee/dependency modify their extensions/dependencies
         # before asking for package-specific modifications
@@ -400,6 +409,15 @@ class EnvModule(object):
             module_file_content += line
         for line in self.module_specific_content(module_configuration):
             module_file_content += line
+
+        # Print a warning in case I am accidentally overwriting
+        # a module file that is already there (name clash)
+        if not overwrite and os.path.exists(self.file_name):
+            message = 'Module file already exists : skipping creation\n'
+            message += 'file : {0.file_name}\n'
+            message += 'spec : {0.spec}'
+            tty.warn(message.format(self))
+            return
 
         # Dump to file
         with open(self.file_name, 'w') as f:
@@ -456,8 +474,7 @@ class EnvModule(object):
 
 class Dotkit(EnvModule):
     name = 'dotkit'
-    path = join_path(spack.share_path, "dotkit")
-
+    path = join_path(spack.share_path, 'dotkit')
     environment_modifications_formats = {
         PrependPath: 'dk_alter {name} {value}\n',
         SetEnv: 'dk_setenv {name} {value}\n'
@@ -469,7 +486,7 @@ class Dotkit(EnvModule):
 
     @property
     def file_name(self):
-        return join_path(Dotkit.path, self.spec.architecture,
+        return join_path(self.path, self.spec.architecture,
                          '%s.dk' % self.use_name)
 
     @property
@@ -498,7 +515,6 @@ class Dotkit(EnvModule):
 class TclModule(EnvModule):
     name = 'tcl'
     path = join_path(spack.share_path, "modules")
-
     environment_modifications_formats = {
         PrependPath: 'prepend-path --delim "{delim}" {name} \"{value}\"\n',
         AppendPath: 'append-path   --delim "{delim}" {name} \"{value}\"\n',
@@ -518,7 +534,7 @@ class TclModule(EnvModule):
 
     @property
     def file_name(self):
-        return join_path(TclModule.path, self.spec.architecture, self.use_name)
+        return join_path(self.path, self.spec.architecture, self.use_name)
 
     @property
     def header(self):
@@ -670,8 +686,16 @@ class LmodModule(EnvModule):
             return self.path_part_without_hash.format(token=value)
         # For virtual providers add a small part of the hash
         # to distinguish among different variants in a directory hierarchy
-        value.hash = value.dag_hash(length=6)
-        return self.path_part_with_hash.format(token=value)
+        suffixes = self._get_suffixes() if name == '' else []
+        # Path part for a provider
+        if name in self.hierarchy_tokens:
+            suffixes.append(value.dag_hash(length=7))
+
+        value.hash = '-'.join(suffixes)
+
+        if value.hash:
+            return self.path_part_with_hash.format(token=value)
+        return self.path_part_without_hash.format(token=value)
 
     @property
     def file_name(self):

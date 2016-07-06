@@ -82,7 +82,8 @@ class Espresso(Package):
             options.append('--enable-openmp')
 
         if '+scalapack' in spec:
-            options.append('--with-scalapack=yes')
+            scalapack_type = 'intel' if '%intel' in spec else 'yes'
+            options.append('--with-scalapack={0}'.format(scalapack_type))
 
         if '+elpa' in spec:
             options.append('--with-elpa=yes')
