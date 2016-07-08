@@ -34,6 +34,7 @@ class Jpeg(Package):
 
     version('9b', '6a9996ce116ec5c52b4870dbcd6d3ddb')
     version('9a', '3353992aecaee1805ef4109aadd433e7')
+    version('8d', '52654eb3b2e60c35731ea8fc87f1bd29')
 
     def install(self, spec, prefix):
         configure("--prefix=%s" % prefix)
