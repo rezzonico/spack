@@ -69,7 +69,7 @@ class Mumps(Package):
             raise RuntimeError('You cannot use the variants parmetis or ptscotch without mpi')  # NOQA: E501
 
         makefile_conf = [
-            "LIBBLAS = -L%s -lblas" % self.spec['blas'].prefix.lib
+            "LIBBLAS = %s" % self.spec['blas'].blas_ld_flags
         ]
 
         orderings = ['-Dpord']
@@ -134,7 +134,7 @@ class Mumps(Package):
             makefile_conf.extend(
                 ["CC = %s" % self.spec['mpi'].mpicc,
                  "FC = %s" % self.spec['mpi'].mpifc,
-                 "SCALAP = %s" % self.spec['scalapack'].fc_link,
+                 "SCALAP = %s" % self.spec['scalapack'].scalapack_ld_flags,
                  "MUMPS_TYPE = par"])
         else:
             makefile_conf.extend(

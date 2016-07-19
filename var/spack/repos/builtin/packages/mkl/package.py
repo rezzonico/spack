@@ -26,18 +26,36 @@ class Mkl(Package):
 
     def setup_dependent_package(self, module, dependent_spec):
         spec = self.spec
+
+        blas_libs = ['mkl_intel_lp64', 'mkl_core', 'mkl_sequential']
+        scalapack_libs = ['mkl_scalapack_lp64']
         
         if 'intelmpi' in spec or 'mvapich2' in spec:
-            libblacs='-lmkl_blacs_intelmpi_lp64'
+            scalapack_libs.append('mkl_blacs_intelmpi_lp64')
         elif 'openmpi' in spec:
-            libblacs='-lmkl_blacs_openmpi_lp64'
+            scalapack_libs.append('mkl_blacs_openmpi_lp64')
         else:
-            libblacs='-lmkl_blacs_lp64'
+            scalapack_libs.append('mkl_blacs_lp64')
 
-        mkl_lib = join_path(spec.prefix.lib, 'lib', 'intel64')
-        spec.fc_link = '-L{0} {1} {2} {3}'.format(mkl_lib,
-                                                  '-lmkl_scalapack_lp64', libblacs,
-                                                  '-lmkl_intel_lp64 -lmkl_core -lmkl_sequential')
-        spec.cc_link = '-L{0} {1} {2} {3}'.format(mkl_lib,
-                                                  '-lmkl_scalapack_lp64', libblacs,
-                                                  '-lmkl_intel_lp64 -lmkl_core -lmkl_sequential')
+        mkl_lib = join_path(spec.prefix.lib, 'intel64')
+
+        spec.blas_ld_flags = \
+            '-L{0} {1}'.format(mkl_lib,
+                               ' '.join(('-l{0}'.format(l) for l in blas_libs)))
+        spec.lapack_ld_flags = spec.blas_ld_flags
+
+        spec.blas_static_libs = \
+            [join_path(mkl_lib, 'lib{0}.a'.format(l)) for l in blas_libs]
+        spec.lapack_static_libs = spec.blas_static_libs
+
+        spec.blas_shared_libs = \
+            [join_path(mkl_lib, 'lib{0}.{1}'.format(l, dso_suffix)) for l in blas_libs]
+        spec.lapack_shared_libs = spec.blas_shared_libs
+
+        spec.scalapack_ld_flags = \
+            '-L{0} {1}'.format(mkl_lib,
+                               ' '.join(('-l{0}'.format(l) for l in scalapack_libs)))
+
+        spec.scalapack_static_libs =\
+            [join_path(mkl_lib, 'lib{0}.a'.format(l)) for l in scalapack_libs]
+

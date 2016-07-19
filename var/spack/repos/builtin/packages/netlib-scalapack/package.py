@@ -73,9 +73,12 @@ class NetlibScalapack(Package):
 
     def setup_dependent_package(self, module, dependent_spec):
         spec = self.spec
-        lib_dsuffix = '.dylib' if sys.platform == 'darwin' else '.so'
-        lib_suffix = lib_dsuffix if '+shared' in spec else '.a'
 
-        spec.fc_link = '-L%s -lscalapack' % spec.prefix.lib
-        spec.cc_link = spec.fc_link
-        spec.libraries = [join_path(spec.prefix.lib, 'libscalapack%s' % lib_suffix)]
+        spec.scalapack_ld_flags = '-L{0} -lscalapack'.format(spec.prefix.lib)
+
+        spec.scalapack_static_libs = \
+            [join_path(spec.prefix.lib, 'libscalapack.a')]
+        if '+shared' in spec:
+            spec.scalapack_shared_libs = \
+                [join_path(spec.prefix.lib,
+                           'libscalapack.{0}'.format(dso_suffix))]

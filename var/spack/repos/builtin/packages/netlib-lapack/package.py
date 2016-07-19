@@ -106,3 +106,9 @@ class NetlibLapack(Package):
         if '+shared' in self.spec:
             self.spec.blas_shared_lib   = join_path(libdir, 'libblas.%s' % dso_suffix)
             self.spec.lapack_shared_lib = join_path(libdir, 'liblapack.%s' % dso_suffix)
+
+        self.spec.blas_ld_flags = '-L{0} -lblas'.format(self.prefix.lib)
+        self.spec.lapack_ld_flags = '-L{0} -llapack {1}'.format(
+            self.prefix.lib,
+            '-lblas' if '~shared' in spec else '')
+        
