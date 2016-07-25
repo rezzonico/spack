@@ -165,7 +165,10 @@ class TclTests(ModuleFileGeneratorTests):
         'enable': ['tcl'],
         'tcl': {
             'all': {
-                'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']}
+                'filter': {'environment_blacklist': ['CMAKE_PREFIX_PATH']},
+                'environment': {
+                    'set': {'{name}_ROOT': '{prefix}'}
+                }
             },
             'arch=x86-linux': {
                 'environment': {
@@ -272,6 +275,7 @@ class TclTests(ModuleFileGeneratorTests):
         self.assertEqual(
             len([x for x in content if 'setenv FOO "foo"' in x]), 1)
         self.assertEqual(len([x for x in content if 'unsetenv BAR' in x]), 1)
+        self.assertEqual(len([x for x in content if 'setenv MPILEAKS_ROOT' in x]), 1)
 
         spec = spack.spec.Spec(libdwarf_spec_string)
         content = self.get_modulefile_content(spec)
@@ -286,6 +290,7 @@ class TclTests(ModuleFileGeneratorTests):
             len([x for x in content if 'is-loaded foo/bar' in x]), 1)
         self.assertEqual(
             len([x for x in content if 'module load foo/bar' in x]), 1)
+        self.assertEqual(len([x for x in content if 'setenv LIBDWARF_ROOT' in x]), 1)
 
     def test_blacklist(self):
         spack.modules.CONFIGURATION = self.configuration_blacklist
