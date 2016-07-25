@@ -58,9 +58,9 @@ class SuiteSparse(Package):
         # inject Spack compiler wrappers
         make_args.extend([
              'AUTOCC=no',
-             'CC=cc',
-             'CXX=c++',
-             'F77=f77',
+             'CC={0}'.format(spack_cc),
+             'CXX={0}'.format(spack_cxx),
+             'F77={0}'.format(spack_f77),
         ])
 
         # use Spack's metis in CHOLMOD/Partition module,
@@ -71,17 +71,18 @@ class SuiteSparse(Package):
         ])
 
         # Intel TBB in SuiteSparseQR
-        if '+tbb' in spec:
-            make_args.extend([
-                'SPQR_CONFIG=-DHAVE_TBB',
-                'TBB=-L%s -ltbb' % spec['tbb'].prefix.lib,
-            ])
+        # if '+tbb' in spec:
+        #     make_args.extend([
+        #         'SPQR_CONFIG=-DHAVE_TBB',
+        #         'TBB=-L%s -ltbb' % spec['tbb'].prefix.lib,
+        #     ])
 
         # BLAS arguments require path to libraries
         # FIXME : (blas / lapack always provide libblas and liblapack as aliases)
-        make_args.extend([
-            'BLAS=-lblas',
-            'LAPACK=-llapack'
-        ])
+        if '%intel' not in spec:
+            make_args.extend([
+                    'BLAS=-lblas',
+                    'LAPACK=-llapack'
+                    ])
 
         make('install', *make_args)

@@ -123,6 +123,11 @@ class Openblas(Package):
             self.spec.blas_shared_lib   = join_path(libdir, 'libopenblas.%s' %
                                                     dso_suffix)
             self.spec.lapack_shared_lib = self.spec.blas_shared_lib
+        
+        self.spec.blas_ld_flags = '-L{0} -lopenblas {1}'.format( \
+            libdir,
+            '-lpthread' if 'openmp' in self.spec else '')
+        self.spec.lapack_ld_flags = self.spec.blas_ld_flags
 
     def check_install(self, spec):
         source_file = join_path(os.path.dirname(self.module.__file__),

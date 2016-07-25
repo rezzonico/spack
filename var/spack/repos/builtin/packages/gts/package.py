@@ -24,21 +24,30 @@
 ##############################################################################
 from spack import *
 
-class Jpeg(Package):
-    """libjpeg is a widely used free library with functions for handling the
-    JPEG image data format. It implements a JPEG codec (encoding and decoding)
-    alongside various utilities for handling JPEG data."""
 
-    homepage = "http://www.ijg.org"
-    url      = "http://www.ijg.org/files/jpegsrc.v9b.tar.gz"
+class Gts(Package):
+    """GTS stands for the GNU Triangulated Surface Library.
 
-    version('9b', '6a9996ce116ec5c52b4870dbcd6d3ddb')
-    version('9a', '3353992aecaee1805ef4109aadd433e7')
-    version('8d', '52654eb3b2e60c35731ea8fc87f1bd29')
+    It is an Open Source Free Software Library intended to provide a set of
+    useful functions to deal with 3D surfaces meshed with interconnected
+    triangles. The source code is available free of charge under the Free
+    Software LGPL license.
+
+    The code is written entirely in C with an object-oriented approach
+    based mostly on the design of GTK+. Careful attention is paid to
+    performance related issues as the initial goal of GTS is to provide a
+    simple and efficient library to scientists dealing with 3D computational
+    surface meshes.
+    """
+
+    homepage = "http://gts.sourceforge.net/index.html"
+    url = "http://gts.sourceforge.net/tarballs/gts-snapshot-121130.tar.gz"
+
+    version('121130', '023ebb6b13b8707534182a3ef0d12908')
+
+    depends_on('glib')
 
     def install(self, spec, prefix):
-        configure("--prefix=%s" % prefix)
-
+        configure('--prefix={0}'.format(prefix))
         make()
-        make("test")
-        make("install")
+        make('install')
