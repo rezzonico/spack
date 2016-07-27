@@ -38,6 +38,8 @@ class PyMatplotlib(Package):
 
     extends('python', ignore=r'bin/nosetests.*$|bin/pbr$')
 
+    patch('libqhull.patch', when='^qhull@7.2.0')
+    
     depends_on('py-pyside', when='+gui')
     depends_on('py-ipython', when='+ipython')
     depends_on('py-pyparsing')

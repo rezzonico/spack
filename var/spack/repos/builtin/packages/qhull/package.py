@@ -36,6 +36,7 @@ class Qhull(Package):
 
     homepage = "http://www.qhull.org"
 
+    version('master', git='https://github.com/qhull/qhull')
     version('7.2.0', 'e6270733a826a6a7c32b796e005ec3dc',
             url="http://www.qhull.org/download/qhull-2015-src-7.2.0.tgz")
 
@@ -44,9 +45,14 @@ class Qhull(Package):
 
     # https://github.com/qhull/qhull/pull/5
     patch('qhull-iterator.patch', when='@1.0')
+    patch('pkgconfig.patch', when='@7.2.0')
+    patch('intel_compiler.patch', when='%intel@:16')
     
     depends_on('cmake')
 
+#    def setup_dependent_environment(self, spack_env, run_env, extension_spec):
+#        spack_env.prepend('PKG_CONFIG_PATH', self.prefix.lib)
+   
     def install(self, spec, prefix):
         with working_dir('spack-build', create=True):
             cmake('..', *std_cmake_args)

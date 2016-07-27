@@ -1,0 +1,24 @@
+diff -Naur matplotlib-1.4.3.orig/setupext.py matplotlib-1.4.3/setupext.py
+--- matplotlib-1.4.3.orig/setupext.py	2015-02-17 02:48:56.000000000 +0100
++++ matplotlib-1.4.3/setupext.py	2016-07-27 23:35:58.842274000 +0200
+@@ -1053,7 +1053,7 @@
+         self.__class__.found_external = True
+         try:
+             return self._check_for_pkg_config(
+-                'qhull', 'qhull/qhull_a.h', min_version='2003.1')
++                'qhull', 'libqhull/qhull_a.h', min_version='2003.1')
+         except CheckFailed as e:
+             self.__class__.found_pkgconfig = False
+             # Qhull may not be in the pkg-config system but may still be
+diff -Naur matplotlib-1.4.3.orig/src/qhull_wrap.c matplotlib-1.4.3/src/qhull_wrap.c
+--- matplotlib-1.4.3.orig/src/qhull_wrap.c	2015-02-17 02:48:56.000000000 +0100
++++ matplotlib-1.4.3/src/qhull_wrap.c	2016-07-27 23:36:12.573969714 +0200
+@@ -7,7 +7,7 @@
+  */
+ #include "Python.h"
+ #include "numpy/noprefix.h"
+-#include "qhull/qhull_a.h"
++#include "libqhull/qhull_a.h"
+ #include <stdio.h>
+ 
+ 
