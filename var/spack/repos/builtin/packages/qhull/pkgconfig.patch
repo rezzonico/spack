@@ -1,0 +1,72 @@
+diff -Naur qhull-2015.2.orig/build/qhull.pc.in qhull-2015.2/build/qhull.pc.in
+--- qhull-2015.2.orig/build/qhull.pc.in	1970-01-01 01:00:00.000000000 +0100
++++ qhull-2015.2/build/qhull.pc.in	2016-07-27 13:45:45.553824520 +0200
+@@ -0,0 +1,14 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++includedir=@includedir@
++libdir=@libdir@
++
++Name: qhull
++Description: Non-reentrant library (global struct) for convex hull, Delaunay triangulation, Voronoi diagram, and halfspace intersection about a point
++# qh_QHpointer==0
++Version: @VERSION@
++URL: http://www.qhull.org
++Requires:
++Conflicts:
++Libs: -L${libdir} -lqhull -lm
++Cflags: -I${includedir}
+diff -Naur qhull-2015.2.orig/build/qhull_p.pc.in qhull-2015.2/build/qhull_p.pc.in
+--- qhull-2015.2.orig/build/qhull_p.pc.in	1970-01-01 01:00:00.000000000 +0100
++++ qhull-2015.2/build/qhull_p.pc.in	2016-07-27 13:45:45.553824520 +0200
+@@ -0,0 +1,14 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++includedir=@includedir@
++libdir=@libdir@
++
++Name: qhull_p
++Description: Non-reentrant library (global pointer) for convex hull, Delaunay triangulation, Voronoi diagram, and halfspace intersection about a point
++# qh_QHpointer==1
++Version: @VERSION@
++URL: http://www.qhull.org
++Requires:
++Conflicts:
++Libs: -L${libdir} -lqhull_p -lm
++Cflags: -I${includedir}
+diff -Naur qhull-2015.2.orig/build/qhull_r.pc.in qhull-2015.2/build/qhull_r.pc.in
+--- qhull-2015.2.orig/build/qhull_r.pc.in	1970-01-01 01:00:00.000000000 +0100
++++ qhull-2015.2/build/qhull_r.pc.in	2016-07-27 13:45:45.554824499 +0200
+@@ -0,0 +1,11 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++includedir=@includedir@
++libdir=@libdir@
++
++Name: qhull_r
++Description: Reentrant library for convex hull, Delaunay triangulation, Voronoi diagram, and halfspace intersection about a point
++Version: @VERSION@
++Requires:
++Libs: -L${libdir} -lqhull_r -lm
++Cflags: -I${includedir}
+diff -Naur qhull-2015.2.orig/CMakeLists.txt qhull-2015.2/CMakeLists.txt
+--- qhull-2015.2.orig/CMakeLists.txt	2016-01-19 01:21:32.000000000 +0100
++++ qhull-2015.2/CMakeLists.txt	2016-07-27 13:55:00.511876772 +0200
+@@ -624,3 +624,17 @@
+ install(FILES html/rbox.man          DESTINATION ${MAN_INSTALL_DIR} RENAME rbox.1)
+ install(FILES ${doc_FILES}           DESTINATION ${DOC_INSTALL_DIR})
+ install(DIRECTORY html/              DESTINATION ${DOC_INSTALL_DIR})
++
++set(PKG_CONFIG_FILES  qhull qhull_p qhull_r)
++set(VERSION ${qhull_VERSION2})
++set(prefix ${CMAKE_INSTALL_PREFIX})
++set(exec_prefix ${BIN_INSTALL_DIR})
++set(libdir ${LIB_INSTALL_DIR})  
++set(includedir ${INCLUDE_INSTALL_DIR})  
++foreach(_file ${PKG_CONFIG_FILES})
++  configure_file(
++    ${PROJECT_SOURCE_DIR}/build/${_file}.pc.in
++    ${PROJECT_BINARY_DIR}/${_file}.pc
++    @ONLY)
++  install(FILES ${PROJECT_BINARY_DIR}/${_file}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
++endforeach()
