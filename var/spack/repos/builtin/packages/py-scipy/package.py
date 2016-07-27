@@ -38,12 +38,10 @@ class PyScipy(Package):
     depends_on('py-numpy+blas+lapack')
 
     def install(self, spec, prefix):
-        if 'atlas' in spec:
-            # libatlas.so actually isn't always installed, but this
-            # seems to make the build autodetect things correctly.
-            env['ATLAS'] = join_path(spec['atlas'].prefix.lib, 'libatlas.' + dso_suffix)
-        else:
-            env['BLAS']   = spec['blas'].blas_shared_lib
-            env['LAPACK'] = spec['lapack'].lapack_shared_lib
+        compiler_opts = []
+        if spec.compiler.name == 'intel':
+            compiler_opts = ['--compiler=intelem', '--fcompiler=intelem']
 
-        python('setup.py', 'install', '--prefix=%s' % prefix)
+        python('setup.py', 'config')
+        python('setup.py', 'build', *compiler_opts)
+        python('setup.py', 'install', '--prefix={0}'.format(prefix))
