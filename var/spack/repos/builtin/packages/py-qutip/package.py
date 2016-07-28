@@ -35,9 +35,13 @@ class PyQutip(Package):
     variant('f90mc', default=False, description='Activate the mc solver')
     version('3.1.0', '73aefdc714149fa6e1a03de660f2eb2b')
 
+    extends('python')
+    # Build dependency
+    depends_on('py-setuptools')
+    depends_on("py-cython")
+
     depends_on("py-numpy")
     depends_on("py-scipy")
-    depends_on("py-cython")
 
     def install(self, spec, prefix):
         opts = []
