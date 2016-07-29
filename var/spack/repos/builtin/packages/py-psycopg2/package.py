@@ -7,6 +7,7 @@ class PyPsycopg2(Package):
     homepage = "https://pypi.python.org/pip"
     url = "https://pypi.python.org/pip"
     
+    version('2.6.2', pip='psycopg2', version='2.6.2')
     version('2.6.1', pip='psycopg2', version='2.6.1')
 
     extends('python')
