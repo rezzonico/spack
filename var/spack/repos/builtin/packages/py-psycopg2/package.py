@@ -9,7 +9,8 @@ class PyPsycopg2(Package):
     
     version('2.6.1', pip='psycopg2', version='2.6.1')
 
-    extends('py-pip')
+    extends('python')
+    depends_on('py-pip')
 
     def install(self, spec, prefix):
         pip('install', *std_pip_args)
