@@ -586,7 +586,7 @@ class Repo(object):
         mkdirp(path)
         for spec, patches in spec.package.patches.items():
             for patch in patches:
-                if patch.path:
+                if hasattr(patch, 'path'):
                     if os.path.exists(patch.path):
                         install(patch.path, path)
                     else:
