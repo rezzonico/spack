@@ -35,11 +35,15 @@ class Szip(Package):
     version('2.1', '902f831bcefb69c6b635374424acbead')
 
     def install(self, spec, prefix):
-        configure('--prefix=%s' % prefix,
-                  '--enable-production',
-                  '--enable-shared',
-                  '--enable-static',
-                  '--enable-encoding')
+        configure_opts = ['CFLAGS=-std=c99'] if '%intel' in self.spec else []
+        configure_opts.extend([
+            '--prefix=%s' % prefix,
+            '--enable-production',
+            '--enable-shared',
+            '--enable-static',
+            '--enable-encoding'            
+        ])
 
+        configure(*configure_opts)
         make()
         make("install")
