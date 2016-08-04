@@ -288,7 +288,7 @@ class EnvModule(object):
     def upper_tokens(self):
         """Tokens that can be substituted in environment variable names"""
         upper_tokens = {
-            'name': self.spec.name.upper()
+            'name': self.spec.name.replace('-', '_').upper()
         }
         return upper_tokens
 

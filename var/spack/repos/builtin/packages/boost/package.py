@@ -136,7 +136,7 @@ class Boost(Package):
             return 'darwin'
 
         toolsets = {'g++': 'gcc',
-                    'icpc': 'intel',
+                    'icpc': 'intel-linux',
                     'clang++': 'clang'}
 
         for cc, toolset in toolsets.iteritems():
@@ -148,7 +148,7 @@ class Boost(Package):
 
     def determine_bootstrap_options(self, spec, withLibs, options):
         boostToolsetId = self.determine_toolset(spec)
-        options.append('--with-toolset=%s' % boostToolsetId)
+        #options.append('--with-toolset=%s' % boostToolsetId)
         options.append("--with-libraries=%s" % ','.join(withLibs))
 
         if '+python' in spec:
@@ -161,8 +161,7 @@ class Boost(Package):
                     compiler_wrapper))
 
             if '+mpi' in spec:
-                f.write('using mpi : %s ;\n' %
-                        join_path(spec['mpi'].prefix.bin, 'mpicxx'))
+                f.write('using mpi : %s ;\n' % spec['mpi'].mpicc)
             if '+python' in spec:
                 f.write('using python : %s : %s ;\n' %
                         (spec['python'].version,

@@ -22,26 +22,29 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
-from spack import *
+import argparse
+import llnl.util.tty as tty
+import spack
+import spack.cmd
+import sys
 
-class PyScipy(Package):
-    """Scientific Library for Python."""
-    homepage = "http://www.scipy.org/"
-    url      = "https://pypi.python.org/packages/source/s/scipy/scipy-0.15.0.tar.gz"
+description = "Is a a package extension activated."
 
-    version('0.17.0', '5ff2971e1ce90e762c59d2cd84837224')
-    version('0.15.1', 'be56cd8e60591d6332aac792a5880110')
-    version('0.15.0', '639112f077f0aeb6d80718dc5019dc7a')
+def setup_parser(subparser):
+    subparser.add_argument(
+        'spec', nargs=argparse.REMAINDER, help="spec of package extension to activate.")
 
-    extends('python')
-    depends_on('py-nose')
-    depends_on('py-numpy+blas+lapack')
 
-    def install(self, spec, prefix):
-        compiler_opts = []
-        if spec.compiler.name == 'intel':
-            compiler_opts = ['--compiler=intelem', '--fcompiler=intelem']
+def is_activated(parser, args):
+    specs = spack.cmd.parse_specs(args.spec)
+    if len(specs) != 1:
+        tty.die("is-activated requires one spec.  %d given." % len(specs))
 
-        python('setup.py', 'config')
-        python('setup.py', 'build', *compiler_opts)
-        python('setup.py', 'install', '--prefix={0}'.format(prefix))
+    spec = spack.cmd.disambiguate_spec(specs[0])
+    if not spec.package.is_extension:
+        tty.die("%s is not an extension." % spec.name)
+
+    if spec.package.activated:
+        tty.msg("{0} is activated.".format(spec.name))
+    else:
+        tty.die("{0} is not activated.".format(spec.name))

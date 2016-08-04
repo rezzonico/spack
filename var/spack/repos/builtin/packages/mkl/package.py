@@ -58,4 +58,10 @@ class Mkl(Package):
 
         spec.scalapack_static_libs =\
             [join_path(mkl_lib, 'lib{0}.a'.format(l)) for l in scalapack_libs]
+        spec.scalapack_shared_libs = \
+            [join_path(mkl_lib, 'lib{0}.{1}'.format(l, dso_suffix)) for l in scalapack_libs]
 
+        # Add this for compatibility with builtin lapack/blas providers
+        spec.blas_shared_lib = ' '.join(spec.blas_shared_libs)
+        spec.lapack_shared_lib = ' '.join(spec.lapack_shared_libs)
+        spec.scalapack_shared_lib = ' '.join(spec.scalapack_shared_libs)

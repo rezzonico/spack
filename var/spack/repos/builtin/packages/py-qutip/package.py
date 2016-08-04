@@ -24,24 +24,32 @@
 ##############################################################################
 from spack import *
 
-class PyScipy(Package):
-    """Scientific Library for Python."""
-    homepage = "http://www.scipy.org/"
-    url      = "https://pypi.python.org/packages/source/s/scipy/scipy-0.15.0.tar.gz"
 
-    version('0.17.0', '5ff2971e1ce90e762c59d2cd84837224')
-    version('0.15.1', 'be56cd8e60591d6332aac792a5880110')
-    version('0.15.0', '639112f077f0aeb6d80718dc5019dc7a')
+class PyQutip(Package):
+    """QuTiP is open-source software for simulating the dynamics of
+    open quantum systems."""
+
+    homepage = "http://qutip.org"
+    url      = "http://qutip.org/downloads/3.1.0/qutip-3.1.0.tar.gz"
+
+    variant('f90mc', default=False, description='Activate the mc solver')
+    version('3.1.0', '73aefdc714149fa6e1a03de660f2eb2b')
 
     extends('python')
-    depends_on('py-nose')
-    depends_on('py-numpy+blas+lapack')
+    # Build dependency
+    depends_on('py-setuptools')
+    depends_on("py-cython")
+
+    depends_on("py-numpy")
+    depends_on("py-scipy")
 
     def install(self, spec, prefix):
-        compiler_opts = []
+        opts = []
         if spec.compiler.name == 'intel':
-            compiler_opts = ['--compiler=intelem', '--fcompiler=intelem']
+            opts = ['--compiler=intelem', '--fcompiler=intelem']
 
-        python('setup.py', 'config')
-        python('setup.py', 'build', *compiler_opts)
+        if '+f90mc' in spec:
+            opts.append('--with-f90mc')
+
+        python('setup.py', 'build', *opts)
         python('setup.py', 'install', '--prefix={0}'.format(prefix))
