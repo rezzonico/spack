@@ -74,9 +74,11 @@ class Petsc(Package):
     depends_on('hypre~internal-superlu', when='+hypre+mpi~complex')
     depends_on('superlu-dist', when='+superlu-dist+mpi')
     depends_on('mumps+mpi', when='+mumps+mpi')
-    depends_on('scotch+mpi', when='+mumps+mpi')
-    depends_on('parmetis', when='+mumps+mpi')
-    depends_on('scalapack', when='+mumps+mpi~shared')
+    depends_on('scotch+mpi', when='^mumps+scotch+mpi')
+    depends_on('parmetis', when='^mumps+parmetis')
+    depends_on('scotch', when='^mumps+scotch~mpi')
+    depends_on('metis@5:', when='^mumps+metis')
+    depends_on('scalapack', when='+mumps+mpi')
 
     def mpi_dependent_options(self):
         if '~mpi' in self.spec:
@@ -140,8 +142,12 @@ class Petsc(Package):
                 '--with-ptscotch=1',
                 '--with-ptscotch-dir={0}'.format(spec['scotch'].prefix)
             ])
-        else: 
-            options.append('--with-ptscotch=0')
+        elif 'scotch' in spec:
+            options.extend([
+                '--with-scotch=1',
+                '--with-scotch-dir={0}'.format(spec['scotch'].prefix)
+            ])
+
 
         if 'scalapack' in spec:
             options.extend([
