@@ -74,7 +74,9 @@ class Petsc(Package):
     depends_on('hypre~internal-superlu', when='+hypre+mpi~complex')
     depends_on('superlu-dist', when='+superlu-dist+mpi')
     depends_on('mumps+mpi', when='+mumps+mpi')
-    depends_on('scalapack', when='+mumps+mpi')
+    depends_on('scotch+mpi', when='+mumps+mpi')
+    depends_on('parmetis', when='+mumps+mpi')
+    depends_on('scalapack', when='+mumps+mpi~shared')
 
     def mpi_dependent_options(self):
         if '~mpi' in self.spec:
@@ -112,7 +114,7 @@ class Petsc(Package):
             '--with-blas-lapack-dir=%s' % spec['lapack'].prefix
         ])
         # Activates library support if needed
-        for library in ('metis', 'boost', 'hdf5', 'hypre', 'parmetis','mumps','scalapack'):
+        for library in ('metis', 'boost', 'hdf5', 'hypre', 'parmetis','mumps'):
             options.append(
                 '--with-{library}={value}'.format(library=library, value=('1' if library in spec else '0'))
             )
@@ -131,6 +133,23 @@ class Petsc(Package):
             options.append(
                 '--with-superlu_dist=0'
             )
+
+
+        if 'scotch+mpi' in spec:
+            options.extend([
+                '--with-ptscotch=1',
+                '--with-ptscotch-dir={0}'.format(spec['scotch'].prefix)
+            ])
+        else: 
+            options.append('--with-ptscotch=0')
+
+        if 'scalapack' in spec:
+            options.extend([
+                '--with-scalapack-include=%s' % spec['scalapack'].prefix.include,
+                '--with-scalapack-lib=%s' % spec['scalapack'].scalapack_shared_libs
+            ])
+        else:
+            options.append('--with-scalapack=0')
 
         configure('--prefix=%s' % prefix, *options)
 
