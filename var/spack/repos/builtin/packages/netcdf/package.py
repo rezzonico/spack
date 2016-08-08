@@ -56,7 +56,16 @@ class Netcdf(Package):
         LDFLAGS  = []
         LIBS     = []
 
-        config_args = [
+        if '+mpi' in self.spec:
+            config_args = [
+                "CC={0}".format(self.spec['mpi'].mpicc),
+                "CXX={0}".format(self.spec['mpi'].mpicxx),
+                "FC={0}".format(self.spec['mpi'].mpifc)
+            ]
+        else:
+            config_args = []
+
+        config_args.extend([
             "--prefix=%s" % prefix,
             "--enable-fsync",
             "--enable-v2",
@@ -69,7 +78,7 @@ class Netcdf(Package):
             "--enable-dynamic-loading",
             # necessary for DAP support
             "--enable-dap"
-        ]
+        ])
 
         # Make sure Netcdf links against Spack's curl
         # Otherwise it may pick up system's curl, which could lead to link errors:
