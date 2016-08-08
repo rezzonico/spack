@@ -33,6 +33,8 @@ description = "print out abstract and concrete versions of a spec."
 def setup_parser(subparser):
     subparser.add_argument('-i', '--ids', action='store_true',
                            help="show numerical ids for dependencies.")
+    subparser.add_argument('-I', '--is-installed', action='store_true',
+                           help="show for dependencies if they are already installed.")
     subparser.add_argument(
         'specs', nargs=argparse.REMAINDER, help="specs of packages")
 
