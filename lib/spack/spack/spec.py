@@ -1959,11 +1959,16 @@ class Spec(object):
         indent = kwargs.pop('indent', 0)
         fmt = kwargs.pop('format', '$_$@$%@+$+$=')
         prefix = kwargs.pop('prefix', None)
+        is_installed = kwargs.pop('is-installed', False)
         check_kwargs(kwargs, self.tree)
 
         out = ""
         cur_id = 0
         ids = {}
+
+        if is_installed:
+            specs = spack.installed_db.query()
+        
         for d, node in self.traverse(order='pre', cover=cover, depth=True):
             if prefix is not None:
                 out += prefix(node)
@@ -1978,7 +1983,15 @@ class Spec(object):
             out += ("    " * d)
             if d > 0:
                 out += "^"
-            out += node.format(fmt, color=color) + "\n"
+            installed = ""
+            if is_installed:
+                hash = node.dag_hash()
+                matches = [spec for spec in specs if
+                           spec.dag_hash()[:len(hash)] == hash]
+                if matches:
+                    installed = " [installed]"
+
+            out += node.format(fmt, color=color) + installed + "\n"
         return out
 
     def __repr__(self):
