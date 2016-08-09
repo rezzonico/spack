@@ -52,11 +52,14 @@ class Eigen(Package):
     depends_on('suite-sparse', when='+suitesparse')
     depends_on('mpfr@2.3.0:')  # Eigen 3.2.7 requires at least 2.3.0
     depends_on('gmp')
+    depends_on('pkg-config')
 
     def install(self, spec, prefix):
 
-        options = []
-        options.extend(std_cmake_args)
+        options = list(std_cmake_args)
+
+        # pkgconfig
+        options.append('-Dpkg_config_libdir={0}'.format(self.prefix))
 
         build_directory = join_path(self.stage.path, 'spack-build')
         source_directory = self.stage.source_path
