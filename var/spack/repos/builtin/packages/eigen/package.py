@@ -59,7 +59,7 @@ class Eigen(Package):
         options = list(std_cmake_args)
 
         # pkgconfig
-        options.append('-Dpkg_config_libdir={0}'.format(self.prefix))
+        options.append('-Dpkg_config_libdir={0}'.format(self.prefix.lib))
 
         build_directory = join_path(self.stage.path, 'spack-build')
         source_directory = self.stage.source_path
