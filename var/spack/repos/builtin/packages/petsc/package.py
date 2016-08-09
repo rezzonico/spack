@@ -150,10 +150,18 @@ class Petsc(Package):
 
 
         if 'scalapack' in spec:
-            options.extend([
-                '--with-scalapack-include=%s' % spec['scalapack'].prefix.include,
-                '--with-scalapack-lib=%s' % spec['scalapack'].scalapack_shared_libs
-            ])
+            if 'mkl' in spec:
+                options.extend([
+                    '--with-scalapack=1',
+                    '--with-scalapack-include=%s' % spec['scalapack'].prefix.include,
+                    '--with-scalapack-lib=%s' % spec['scalapack'].scalapack_shared_libs
+                ])
+            else:
+                options.extend([
+                    '--with-scalapack=1',
+                    '--with-scalapack-dir=%s' % spec['scalapack'].prefix,
+                ])
+
         else:
             options.append('--with-scalapack=0')
 
