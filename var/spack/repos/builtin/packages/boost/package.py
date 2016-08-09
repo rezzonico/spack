@@ -148,7 +148,7 @@ class Boost(Package):
 
     def determine_bootstrap_options(self, spec, withLibs, options):
         boostToolsetId = self.determine_toolset(spec)
-        #options.append('--with-toolset=%s' % boostToolsetId)
+        options.append('--with-toolset=%s' % boostToolsetId)
         options.append("--with-libraries=%s" % ','.join(withLibs))
 
         if '+python' in spec:
@@ -156,15 +156,13 @@ class Boost(Package):
                            join_path(spec['python'].prefix.bin, 'python'))
 
         with open('user-config.jam', 'w') as f:
-            compiler_wrapper = join_path(spack.build_env_path, 'c++')
-            f.write("using {0} : : {1} ;\n".format(boostToolsetId,
-                    compiler_wrapper))
+            f.write("using {0} : : {1} ;\n".format(boostToolsetId, spack_cxx))
 
             if '+mpi' in spec:
                 f.write('using mpi : %s ;\n' % spec['mpi'].mpicc)
             if '+python' in spec:
                 f.write('using python : %s : %s ;\n' %
-                        (spec['python'].version,
+                        ('.'.join([str(x) for x in spec['python'].version[0:2]]),
                          join_path(spec['python'].prefix.bin, 'python')))
 
     def determine_b2_options(self, spec, options):
@@ -199,7 +197,8 @@ class Boost(Package):
         options.extend([
             'toolset=%s' % self.determine_toolset(spec),
             'link=%s' % ','.join(linkTypes),
-            '--layout=tagged'])
+            '--layout=tagged'
+        ])
 
         return threadingOpts
 
@@ -260,6 +259,13 @@ class Boost(Package):
         b2_options = ['-j', '%s' % make_jobs]
 
         threadingOpts = self.determine_b2_options(spec, b2_options)
+
+        project_jam = 'project-config.jam'
+        boostToolsetId = self.determine_toolset(spec)
+        filter_file(
+            'using {0} ;'.format(boostToolsetId), 
+            '', 
+            project_jam)
 
         # In theory it could be done on one call but it fails on
         # Boost.MPI if the threading options are not separated.
