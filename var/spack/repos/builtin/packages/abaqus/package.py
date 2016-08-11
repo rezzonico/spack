@@ -13,7 +13,7 @@ class Abaqus(Package):
     only_binary = True
 
 
-    version('16.4-1')
+    version('6.14-1')
 
     def install(self, spec, prefix):
         pass
