@@ -36,38 +36,9 @@ class Eigen(Package):
 
     version('3.2.7', 'cc1bacbad97558b97da6b77c9644f184', url='http://bitbucket.org/eigen/eigen/get/3.2.7.tar.bz2')
 
-    variant('debug', default=False, description='Builds the library in debug mode')
-
-    variant('metis', default=True, description='Enables metis backend')
-    variant('scotch', default=True, description='Enables scotch backend')
-    variant('fftw', default=True, description='Enables FFTW backend')
-    variant('suitesparse', default=True, description='Enables SuiteSparse support')
-
-    # TODO : dependency on googlehash, superlu, adolc missing
-
-    depends_on('cmake')
-    depends_on('metis@5:', when='+metis')
-    depends_on('scotch', when='+scotch')
-    depends_on('fftw', when='+fftw')
-    depends_on('suite-sparse', when='+suitesparse')
-    depends_on('mpfr@2.3.0:')  # Eigen 3.2.7 requires at least 2.3.0
-    depends_on('gmp')
-    depends_on('pkg-config')
-
     def install(self, spec, prefix):
-
-        options = list(std_cmake_args)
-
-        # pkgconfig
-        options.append('-Dpkg_config_libdir={0}'.format(self.prefix.lib))
-
-        build_directory = join_path(self.stage.path, 'spack-build')
-        source_directory = self.stage.source_path
-
-        if '+debug' in spec:
-            options.append('-DCMAKE_BUILD_TYPE:STRING=Debug')
-
-        with working_dir(build_directory, create=True):
-            cmake(source_directory, *options)
-            make()
-            make("install")
+        with working_dir('spack-build', create=True):
+            cmake('..',
+                  '-Dpkg_config_libdir={0}'.format(self.prefix.lib),
+                  *std_cmake_args)
+            make('install')
