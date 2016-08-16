@@ -57,11 +57,15 @@ class Fenics(Package):
     # variant('slepc4py',     default=True,  description='Uses SLEPc4py')
     # variant('pastix',       default=True,  description='Compile with Pastix')
 
+    patch('petsc-3.7.patch', when='@1.6.1^petsc@3.7:')
+    patch('petsc-version-detection.patch', when='@:1.6.1')
+
     extends('python')
 
     depends_on('py-numpy')
     depends_on('py-ply')
     depends_on('py-six')
+    depends_on('py-sympy')
     depends_on('py-sphinx@1.0.1:', when='+doc')
     depends_on('eigen@3.2.0:')
     depends_on('boost')
@@ -83,6 +87,16 @@ class Fenics(Package):
     depends_on('swig@3.0.3:')
 
     releases = [
+        {
+            'version': '2016.1.0',
+            'md5': '92e8d00f6487a575987201f0b0d19173',
+            'resources': {
+                'ffc': '35457ae164e481ba5c9189ebae060a47',
+                'fiat': 'ac0c49942831ee434301228842bcc280',
+                'instant': '0e3dbb464c4d90d691f31f0fdd63d4f6',
+                'ufl': '37433336e5c9b58d1d5ab4acca9104a7',
+            }
+        },
         {
             'version': '1.6.0',
             'md5': '35cb4baf7ab4152a40fb7310b34d5800',
@@ -114,6 +128,15 @@ class Fenics(Package):
                      destination='depends',
                      when='@{version}'.format(**release),
                      placement=name)
+
+    def patch(self):
+        pass
+
+    @when('+hdf5~cxx')
+    def patch(self):
+        filter_file(r'find_package(HDF5)',
+                    r'find_package(HDF5 COMPONENTS C)',
+                    'CMakeLists.txt')
 
     def cmake_is_on(self, option):
         return 'ON' if option in self.spec else 'OFF'
@@ -165,6 +188,7 @@ class Fenics(Package):
                 self.cmake_is_on('vtk')),
             '-DDOLFIN_ENABLE_ZLIB:BOOL={0}'.format(
                 self.cmake_is_on('zlib')),
+            '-DUFC_INCLUDE_DIR:PATH={0}'.format(prefix.include)
         ]
 
         cmake_args.extend(std_cmake_args)

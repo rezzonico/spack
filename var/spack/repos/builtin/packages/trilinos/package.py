@@ -136,8 +136,6 @@ class Trilinos(Package):
             '-DTPL_ENABLE_Netcdf:BOOL=ON',
             '-DTPL_ENABLE_HYPRE:BOOL=%s' % (
                 'ON' if '+hypre' in spec else 'OFF'),
-            '-DTPL_ENABLE_HDF5:BOOL=%s' % (
-                'ON' if '+hdf5' in spec else 'OFF'),
         ])
 
         if '+boost' in spec:
@@ -148,6 +146,15 @@ class Trilinos(Package):
             ])
         else:
             options.extend(['-DTPL_ENABLE_Boost:BOOL=OFF'])
+
+        if '+hdf5' in spec:
+            options.extend([
+                '-DTPL_ENABLE_HDF5:BOOL=ON',
+                '-DHDF5_INCLUDE_DIRS:PATH=%s' % spec['hdf5'].prefix.include,
+                '-DHDF5_LIBRARY_DIRS:PATH=%s' % spec['hdf5'].prefix.lib              
+                ])
+        else:
+            options.extend(['-DTPL_ENABLE_HDF5:BOOL=OFF'])
 
         # Fortran lib
         libgfortran = os.path.dirname(os.popen(
