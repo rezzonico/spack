@@ -1,3 +1,6 @@
+import grp
+import os
+
 from spack import *
 
 class Molpro(Package):
@@ -49,3 +52,7 @@ class Molpro(Package):
         filter_file('VERBOSE=@', 'VERBOSE=', 'CONFIG')
         make()
         make("install")
+        # Change group ownership, prevent others to execute
+        gid = grp.getgrnam('molpro-soft').gr_gid
+        os.chown(self.prefix, -1, gid)
+        os.chmod(self.prefix, 0750)
