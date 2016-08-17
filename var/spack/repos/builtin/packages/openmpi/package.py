@@ -115,6 +115,10 @@ class Openmpi(Package):
         self.spec.mpicxx = join_path(self.prefix.bin, 'mpic++')
         self.spec.mpifc = join_path(self.prefix.bin, 'mpif90')
         self.spec.mpif77 = join_path(self.prefix.bin, 'mpif77')
+        self.spec.mpicxx_shared_libs = [
+            join_path(self.prefix.lib, 'libmpi_cxx.so'),
+            join_path(self.prefix.lib, 'libmpi.so')
+        ]
 
     @property
     def verbs(self):

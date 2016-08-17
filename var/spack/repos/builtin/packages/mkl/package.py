@@ -22,7 +22,8 @@ class Mkl(Package):
         For dependencies, make mpicc's use spack wrapper.
         """
         spack_env.set('MKLROOT', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
-        pass
+        spack_env.set('LAPACK_DIR', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
+        spack_env.set('BLAS_DIR', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
 
     def setup_dependent_package(self, module, dependent_spec):
         spec = self.spec

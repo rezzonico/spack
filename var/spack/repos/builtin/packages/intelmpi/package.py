@@ -29,6 +29,10 @@ class Intelmpi(Package):
         self.spec.mpicxx = join_path(self.prefix, 'bin64', 'mpiicpc')
         self.spec.mpifc = join_path(self.prefix, 'bin64', 'mpiifort')
         self.spec.mpif77 = join_path(self.prefix, 'bin64', 'mpiifort')
+        self.spec.mpicxx_shared_libs = [
+            join_path(self.prefix.lib64, 'libmpicxx.so'),
+            join_path(self.prefix.lib64, 'libmpi.so')
+        ]
 
     def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
         """

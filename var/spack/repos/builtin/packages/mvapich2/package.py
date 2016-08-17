@@ -202,6 +202,10 @@ class Mvapich2(Package):
         self.spec.mpicxx = join_path(self.prefix.bin, 'mpicxx')
         self.spec.mpifc  = join_path(self.prefix.bin, 'mpif90')
         self.spec.mpif77 = join_path(self.prefix.bin, 'mpif77')
+        self.spec.mpicxx_shared_libs = [
+            join_path(self.prefix.lib, 'libmpicxx.so'),
+            join_path(self.prefix.lib, 'libmpi.so')
+        ]
 
     def install(self, spec, prefix):
         # we'll set different configure flags depending on our
