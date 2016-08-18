@@ -703,11 +703,14 @@ class Package(object):
         """
         Get the prefix into which this package should be or is installed
         """
-        try:
-            rec = spack.installed_db.get_record(self.spec)
-            return spack.util.prefix.Prefix(rec.path)
-        except KeyError:
-            return self.spec.prefix
+        if not hasattr(self, '_prefix'):
+            try:
+                rec = spack.installed_db.get_record(self.spec)
+                self._prefix = spack.util.prefix.Prefix(rec.path)
+            except KeyError:
+                self._prefix = self.spec.prefix
+
+        return self._prefix
 
     @property
     def compiler(self):
