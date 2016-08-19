@@ -52,6 +52,12 @@ class Molpro(Package):
         filter_file('VERBOSE=@', 'VERBOSE=', 'CONFIG')
         make()
         make("install")
+        # Filter molpro script to use srun
+        filter_file(
+            r'LAUNCHER=[\S ]*',
+            r'LAUNCHER="srun %x"',
+            join_path(self.prefix, 'molprop_2015_1_linux_x86_64_i8', 'bin', 'molpro')
+        )
         # Change group ownership, prevent others to execute
         gid = grp.getgrnam('molpro-soft').gr_gid
         os.chown(self.prefix, -1, gid)
