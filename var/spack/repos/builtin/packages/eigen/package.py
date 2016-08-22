@@ -36,6 +36,9 @@ class Eigen(Package):
 
     version('3.2.7', 'cc1bacbad97558b97da6b77c9644f184', url='http://bitbucket.org/eigen/eigen/get/3.2.7.tar.bz2')
 
+    # build dependency
+    depends_on('cmake@2.8.2:')
+    
     def install(self, spec, prefix):
         with working_dir('spack-build', create=True):
             cmake('..',
