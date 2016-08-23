@@ -50,6 +50,10 @@ class Elpa(Package):
             'CC={0}'.format(self.spec['mpi'].mpicc),
             'FC={0}'.format(self.spec['mpi'].mpifc),
             'CXX={0}'.format(self.spec['mpi'].mpicxx),
+            'FCFLAGS={0}'.format(spec['lapack'].lapack_shared_lib),
+            'LDFLAGS={0}'.format(spec['lapack'].lapack_shared_lib),
+            'SCALAPACK_FCFLAGS={0}'.format(spec['scalapack'].scalapack_shared_lib),
+            'SCALAPACK_LDFLAGS={0}'.format(spec['scalapack'].scalapack_shared_lib),
             '--prefix={0}'.format(self.prefix)
         ]
 
