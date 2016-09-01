@@ -39,8 +39,10 @@ class Bzip2(Package):
 
 
     def patch(self):
+        mk = FileFilter('Makefile')
         mf = FileFilter('Makefile-libbz2_so')
-        mf.filter(r'^CC=gcc', 'CC=cc')
+        for x in (mk, mf):
+            x.filter(r'^CC=gcc', 'CC={0}'.format(spack_cc))
 
         # Below stuff patches the link line to use RPATHs on Mac OS X.
         if 'darwin' in self.spec.architecture:
