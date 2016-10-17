@@ -31,6 +31,7 @@ class Paraview(Package):
 
     version('4.4.0', 'fa1569857dd680ebb4d7ff89c2227378')
     version('5.0.0', '4598f0b421460c8bbc635c9a1c3bdbee')
+    version('5.1.2', '44fb32fc8988fcdfbc216c9e40c3e925', url='http://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v5.1&type=source&os=all&downloadFile=ParaView-v5.1.2.tar.gz')
 
     variant('python', default=False, description='Enable Python support')
 
@@ -80,6 +81,11 @@ class Paraview(Package):
 
             feature_args = std_cmake_args[:]
             feature_args.append('-DPARAVIEW_BUILD_QT_GUI:BOOL=%s' % feature_to_bool('+qt'))
+            if '+qt' in spec:
+                feature_args.append('-DVTK_USE_X:BOOL=ON')
+            else:
+                feature_args.append('-DVTK_USE_X:BOOL=%s' % nfeature_to_bool('+osmesa'))
+                
             feature_args.append('-DPARAVIEW_ENABLE_PYTHON:BOOL=%s' % feature_to_bool('+python'))
             if '+python' in spec:
                 feature_args.append('-DPYTHON_EXECUTABLE:FILEPATH=%s/bin/python' % spec['python'].prefix)
@@ -88,7 +94,6 @@ class Paraview(Package):
                 feature_args.append('-DMPIEXEC:FILEPATH=%s/bin/mpiexec' % spec['mpi'].prefix)
             feature_args.append('-DVTK_ENABLE_TCL_WRAPPING:BOOL=%s' % feature_to_bool('+tcl'))
             feature_args.append('-DVTK_OPENGL_HAS_OSMESA:BOOL=%s' % feature_to_bool('+osmesa'))
-            feature_args.append('-DVTK_USE_X:BOOL=%s' % nfeature_to_bool('+osmesa'))
             feature_args.append('-DVTK_RENDERING_BACKEND:STRING=%s' % feature_to_bool('+opengl2', 'OpenGL2', 'OpenGL'))
 
             feature_args.extend(std_cmake_args)
