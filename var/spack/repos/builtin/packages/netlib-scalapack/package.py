@@ -82,3 +82,6 @@ class NetlibScalapack(Package):
             spec.scalapack_shared_libs = \
                 [join_path(spec.prefix.lib,
                            'libscalapack.{0}'.format(dso_suffix))]
+
+        # Add this for compatibility with builtin lapack/blas providers
+        spec.scalapack_shared_lib = ' '.join(spec.scalapack_shared_libs)

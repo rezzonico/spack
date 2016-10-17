@@ -22,33 +22,28 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
+
 from spack import *
 
-class Libxcb(Package):
-    """The X protocol C-language Binding (XCB) is a replacement
-    for Xlib featuring a small footprint, latency hiding, direct
-    access to the protocol, improved threading support, and
-    extensibility."""
 
-    homepage = "http://xcb.freedesktop.org/"
-    url      = "http://xcb.freedesktop.org/dist/libxcb-1.11.tar.gz"
+class PyAse(Package):
+    """ASE is an Atomic Simulation Environment written in the Python
+    programming language with the aim of setting up, steering, and analyzing
+    atomistic simulations.
+    """
 
-    version('1.11', '1698dd837d7e6e94d029dbe8b3a82deb')
-    version('1.11.1', '118623c15a96b08622603a71d8789bf3')
+    homepage = 'https://wiki.fysik.dtu.dk/ase'
+    url = 'https://pypi.python.org/packages/fc/7b/558e7321f7a879c034ead5d10789b9d6f41beabaee0b156e807c19422ad0/ase-3.11.0.tar.gz'
 
-    depends_on("python")
-    depends_on("xcb-proto")
-    depends_on("pkg-config")
-    depends_on("libpthread-stubs")
-    depends_on('libxau')
+    version('3.11.0', 'd7afe49d5beb1b1c38d60b1e3dd4e763')
 
-    def patch(self):
-        filter_file('typedef struct xcb_auth_info_t {', 'typedef struct {', 'src/xcb.h')
+    variant('scipy', default=True, description='Activate SciPy dependency')
+    variant('matplotlib', default=True, description='Activate Matplotlib dependency')
 
+    extends('python')
+    depends_on('py-numpy')
+    depends_on('py-scipy', when='+scipy')
+    depends_on('py-matplotlib', when='+matplotlib')
 
     def install(self, spec, prefix):
-        env['PKG_CONFIG_PATH'] = env['PKG_CONFIG_PATH'] + ':/usr/lib64/pkgconfig'
-        configure("--prefix=%s" % prefix)
-
-        make()
-        make("install")
+        python('setup.py', 'install', '--prefix=%s' % prefix)

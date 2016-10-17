@@ -22,33 +22,36 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
+
 from spack import *
 
-class Libxcb(Package):
-    """The X protocol C-language Binding (XCB) is a replacement
-    for Xlib featuring a small footprint, latency hiding, direct
-    access to the protocol, improved threading support, and
-    extensibility."""
+class Hlib(Package):
+    """HLib is a program library for hierarchical matrices and H2-matrices."""
+    homepage = "http://www.hlib.org/"
+    url      = "http://fake-url-here-add-it-to-mirror/HLib-1.3p19.tar.gz"
 
-    homepage = "http://xcb.freedesktop.org/"
-    url      = "http://xcb.freedesktop.org/dist/libxcb-1.11.tar.gz"
+    version('1.3p19', 'f59741a4a56dccbe91f6c38cdfb6f66b')
 
-    version('1.11', '1698dd837d7e6e94d029dbe8b3a82deb')
-    version('1.11.1', '118623c15a96b08622603a71d8789bf3')
+    variant('netcdf', default=False, description="Enable NetCDF support")
+    variant('gtk',    default=False, description="Enable GTK support")
 
-    depends_on("python")
-    depends_on("xcb-proto")
-    depends_on("pkg-config")
-    depends_on("libpthread-stubs")
-    depends_on('libxau')
-
-    def patch(self):
-        filter_file('typedef struct xcb_auth_info_t {', 'typedef struct {', 'src/xcb.h')
-
-
+    depends_on('blas')
+    depends_on('lapack')
+    depends_on('netcdf', when='+netcdf')
+    depends_on('gtk',    when='+gtk')
+    
     def install(self, spec, prefix):
-        env['PKG_CONFIG_PATH'] = env['PKG_CONFIG_PATH'] + ':/usr/lib64/pkgconfig'
-        configure("--prefix=%s" % prefix)
+        configure_args = [
+            '--enable-examples',
+            '--enable-optimize',
+            "--with-blas-ldflags=%s" % self.spec['blas'].blas_ld_flags,
+            'LDFLAGS=-lm',
+        ]
+
+        if not '+gtk' in spec:
+	    configure_args.append('--disable-gtktest')
+
+        configure('--prefix=%s' % prefix, *configure_args)
 
         make()
         make("install")

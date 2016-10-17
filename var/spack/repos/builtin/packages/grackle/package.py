@@ -53,10 +53,10 @@ class Grackle(Package):
         link_variables = 'MACH_AR = ar' if spec.version < Version(2.2) else 'MACH_LIBTOOL = libtool'
         substitutions = {
             '@ARCHITECTURE': grackle_architecture,
-            '@CC': spack_cc,
-            '@CXX': spack_cxx,
-            '@FC': spack_fc,
-            '@F77': spack_f77,
+            '@CC': spec['mpi'].mpicc,
+            '@CXX': spec['mpi'].mpicxx,
+            '@FC': spec['mpi'].mpifc,
+            '@F77': spec['mpi'].mpif77,
             '@STDCXX_LIB': ' '.join(self.compiler.stdcxx_libs),
             '@HDF5_ROOT': spec['hdf5'].prefix,
             '@PREFIX': prefix,
