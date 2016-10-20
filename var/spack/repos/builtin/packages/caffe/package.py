@@ -51,6 +51,7 @@ class Caffe(Package):
     version('2', 'c331932e34b5e2f5022fcc34c419080f')
 
     # FIXME: Add additional dependencies if required.
+    variant('cuda', default=False, description='Compile with CUDA Toolkit')
     depends_on('cmake')
     depends_on('lmdb')
     depends_on('leveldb')
@@ -63,25 +64,34 @@ class Caffe(Package):
     depends_on('boost+python')
     depends_on('hdf5')
     depends_on('openblas')
-    #depends_on('gcc')
     depends_on('py-setuptools')
     depends_on('py-pytest')
+    depends_on('cuda@7.5.18', when='+cuda')
+    depends_on('cudnn@7.0', when='+cuda')
 
     def install(self, spec, prefix):
         with working_dir('spack-build', create=True):
             cmake_args = []
             cmake_args.append("-DCMAKE_INSTALL_PREFIX=%s" % prefix)
-            cmake_args.append("-DCPU_ONLY=on")
             cmake_args.append("-DGLOG_INCLUDE_DIR=%s" % spec['glog'].prefix.include)
             cmake_args.append("-DGFLAGS_INCLUDE_DIR=%s" % spec['gflags'].prefix.include)
             cmake_args.append("-DLMDB_INCLUDE_DIR=%s" % spec['lmdb'].prefix.include)
             cmake_args.append("-DPROTOBUF_INCLUDE_DIR=%s" % spec['protobuf'].prefix.include)
-            #cmake_args.append("-DPYTHON_INCLUDE_DIR=%s" % spec['python'].prefix.include)
             cmake_args.append("-DBoost_DIR=%s" % spec['boost'].prefix)
             cmake_args.append("-DHDF5_DIR=%s" % spec['hdf5'].prefix)
             cmake_args.append("-DBLAS=open" )
             cmake_args.append("-DCMAKE_CXX_COMPILER=g++")
             cmake_args.append("-DCMAKE_C_COMPILER=gcc")
+            if '+cuda' in spec:
+              cmake_args.append("-DCUDA_TOOLKIT_ROOT_DIR=%s"%spec['cuda'].prefix)
+              cmake_args.append("-DCPU_ONLY=off")
+              cmake_args.append("-DCUDA_CUDA_LIBRARY=%s"%spec['cuda'].prefix.lib+'/libculibos.a')
+              cmake_args.append("-DCUDNN_LIBRARY=%s"%spec['cudnn'].prefix.lib+'/libcudnn.so')
+              cmake_args.append("-DCUDNN_INCLUDE=%s"%spec['cudnn'].prefix.include)
+            else: 
+              cmake_args.append("-DCPU_ONLY=on")
+               
+             
 
             cmake('..', *cmake_args)
 
