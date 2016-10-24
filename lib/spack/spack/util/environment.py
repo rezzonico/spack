@@ -23,6 +23,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
 import os
+import itertools
+
+from llnl.util.lang import dedupe
 
 system_paths = ['/', '/usr/', '/usr/local']
 suffixes = ['lib', 'lib64', 'include']
@@ -35,9 +38,10 @@ def filter_system_paths(paths):
 
 
 def filter_system_bin_paths(paths):
+    # Turn the iterable into a list. Assume it's a list from here on.
+    paths = list(paths)
     bins = [p for p in paths if p in system_bins]
-    nobins = [p for p in paths if p not in system_bins]
-    return bins + nobins
+    return list(dedupe(bins + paths))
 
 
 def get_path(name):
