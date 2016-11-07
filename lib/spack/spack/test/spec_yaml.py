@@ -61,6 +61,11 @@ class SpecYamlTest(MockPackagesTest):
         spec.concretize()
         self.check_yaml_round_trip(spec)
 
+    def test_yaml_multivalue(self):
+        spec = Spec('multivalue_variant foo="bar,baz"')
+        spec.concretize()
+        self.check_yaml_round_trip(spec)
+
     def test_yaml_subdag(self):
         spec = Spec('mpileaks^mpich+debug')
         spec.concretize()

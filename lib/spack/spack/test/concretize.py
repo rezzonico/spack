@@ -82,7 +82,7 @@ class ConcretizeTest(MockPackagesTest):
     def test_concretize_variant(self):
         self.check_concretize('mpich+debug')
         self.check_concretize('mpich~debug')
-        self.check_concretize('mpich debug=2')
+        self.check_concretize('mpich debug=True')
         self.check_concretize('mpich')
 
     def test_conretize_compiler_flags(self):

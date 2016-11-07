@@ -240,6 +240,33 @@ class SpecSematicsTest(MockPackagesTest):
         self.check_satisfies('mpich~foo', 'mpich foo=FALSE')
         self.check_satisfies('mpich foo=False', 'mpich~foo')
 
+    def test_satisfies_multi_value_variant(self):
+        self.check_satisfies(
+            'multivalue_variant foo="bar,baz"',
+            'multivalue_variant foo="bar,baz"'
+        )
+        # A more constrained spec satisfies a less constrained one
+        self.check_satisfies(
+            'multivalue_variant foo="bar,baz"',
+            'multivalue_variant foo="bar"'
+        )
+        self.check_satisfies(
+            'multivalue_variant foo="bar,baz"',
+            'multivalue_variant foo="baz"'
+        )
+        self.check_satisfies(
+            'multivalue_variant foo="bar,baz,barbaz"',
+            'multivalue_variant foo="bar,baz"'
+        )
+        self.check_satisfies(
+            'multivalue_variant foo="bar,baz"',
+            'foo="bar,baz"'
+        )
+        self.check_satisfies(
+            'multivalue_variant foo="bar,baz"',
+            'foo="bar"'
+        )
+
     def test_satisfies_unconstrained_variant(self):
         # only asked for mpich, no constraints.  Either will do.
         self.check_satisfies('mpich+foo', 'mpich')
@@ -263,7 +290,7 @@ class SpecSematicsTest(MockPackagesTest):
         # No matchi in specs
         self.check_unsatisfiable('mpich~foo', 'mpich+foo')
         self.check_unsatisfiable('mpich+foo', 'mpich~foo')
-        self.check_unsatisfiable('mpich foo=1', 'mpich foo=2')
+        self.check_unsatisfiable('mpich foo=True', 'mpich foo=False')
 
     def test_satisfies_matching_compiler_flag(self):
         self.check_satisfies('mpich cppflags="-O3"', 'mpich cppflags="-O3"')
@@ -385,6 +412,19 @@ class SpecSematicsTest(MockPackagesTest):
         self.check_constrain('libelf+debug~foo',
                              'libelf+debug', 'libelf+debug~foo')
 
+    def test_constrain_multi_value_variant(self):
+        self.check_constrain(
+            'multivalue_variant foo="bar,baz"',
+            'multivalue_variant foo="bar"',
+            'multivalue_variant foo="baz"'
+        )
+
+        self.check_constrain(
+            'multivalue_variant foo="bar,baz,barbaz"',
+            'multivalue_variant foo="bar,barbaz"',
+            'multivalue_variant foo="baz"'
+        )
+
     def test_constrain_compiler_flags(self):
         self.check_constrain('libelf cflags="-O3" cppflags="-Wall"',
                              'libelf cflags="-O3"', 'libelf cppflags="-Wall"')
@@ -407,18 +447,29 @@ class SpecSematicsTest(MockPackagesTest):
                              'libelf', 'libelf %gcc@4.4.7')
 
     def test_invalid_constraint(self):
-        self.check_invalid_constraint('libelf@0:2.0', 'libelf@2.1:3')
         self.check_invalid_constraint(
-            'libelf@0:2.5%gcc@4.8:4.9', 'libelf@2.1:3%gcc@4.5:4.7')
-
-        self.check_invalid_constraint('libelf+debug', 'libelf~debug')
-        self.check_invalid_constraint('libelf+debug~foo', 'libelf+debug+foo')
-        self.check_invalid_constraint('libelf debug=2', 'libelf debug=1')
+            'libelf@0:2.0', 'libelf@2.1:3'
+        )
+        self.check_invalid_constraint(
+            'libelf@0:2.5%gcc@4.8:4.9', 'libelf@2.1:3%gcc@4.5:4.7'
+        )
+        self.check_invalid_constraint(
+            'libelf+debug', 'libelf~debug'
+        )
+        self.check_invalid_constraint(
+            'libelf+debug~foo', 'libelf+debug+foo'
+        )
+        self.check_invalid_constraint(
+            'libelf debug=True', 'libelf debug=False'
+        )
 
         self.check_invalid_constraint(
-            'libelf cppflags="-O3"', 'libelf cppflags="-O2"')
-        self.check_invalid_constraint('libelf platform=test target=be os=be',
-                                      'libelf target=fe os=fe')
+            'libelf cppflags="-O3"', 'libelf cppflags="-O2"'
+        )
+        self.check_invalid_constraint(
+            'libelf platform=test target=be os=be',
+            'libelf target=fe os=fe'
+        )
 
     def test_constrain_changed(self):
         self.check_constrain_changed('libelf', '@1.0')

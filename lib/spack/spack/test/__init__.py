@@ -78,6 +78,7 @@ test_names = [
     'url_extrapolate',
     'url_parse',
     'url_substitution',
+    'variant',
     'versions',
     'provider_index',
     'spack_yaml',
