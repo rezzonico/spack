@@ -36,6 +36,7 @@ class Gmsh(Package):
     homepage = 'http://gmsh.info'
     url = 'http://gmsh.info/src/gmsh-2.11.0-source.tgz'
 
+    version('2.14.1', '8666d1b7df328827e35f62e790ef81c9')
     version('2.11.0', 'f15b6e7ac9ca649c9a74440e1259d0db')
 
     # FIXME : Misses dependencies on gmm, PetsC, TetGen
