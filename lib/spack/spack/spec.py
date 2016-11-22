@@ -586,6 +586,7 @@ class DependencySpec(object):
     def __str__(self):
         return str(self.spec)
 
+
 _valid_compiler_flags = [
     'cflags', 'cxxflags', 'fflags', 'ldflags', 'ldlibs', 'cppflags']
 
