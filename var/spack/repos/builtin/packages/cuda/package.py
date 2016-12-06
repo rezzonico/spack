@@ -68,6 +68,7 @@ class Cuda(Package):
             '--silent',   # disable interactive prompts
             '--verbose',  # create verbose log file
             '--toolkit',  # install CUDA Toolkit
+            '--override',  # Error: unsupported compiler: 4.9.3. Use --override
             '--toolkitpath=%s' % prefix
         )
 

@@ -22,44 +22,21 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
-import os
+
 from spack import *
 
-class Lmdb(Package):
-    """Read-only mirror of official repo on openldap.org. Issues and
-    pull requests here are ignored. Use OpenLDAP ITS for issues.
-    http://www.openldap.org/software/repo.html"""
+class PyPytest(Package):
+    homepage = "http://doc.pytest.org/en/latest/"
+    url      = "https://github.com/pytest-dev/pytest/archive/2.9.2.tar.gz"
 
+    version('3.0.0', 'c5fd075dbd81b79a33feabeeae547d50')
+    version('2.9.2', 'dafd8bffd6446c25110a31d68c8d44b4')
+    version('2.9.1', 'b2ce328213632eb8b2fd7f321454a548')
+    version('2.9.0', '5819fc2c2e1261e315411c37445dd835')
+    version('2.8.7', 'cb46e755d39c1292c9ec5f334f333ceb')
 
-    homepage = "http://www.openldap.org/software/repo.html"
-    url      = "https://github.com/LMDB/lmdb/archive/LMDB_0.9.16.tar.gz"
-
-    version('0.9.16', '0de89730b8f3f5711c2b3a4ba517b648')
+    extends('python')
+    depends_on('py-setuptools')
 
     def install(self, spec, prefix):
-        os.chdir('libraries/liblmdb')
-        
-        if self.compiler.name == 'intel':
-          filter_file(r'gcc','icc','Makefile')
-        make()
-
-        mkdirp(prefix.bin)
-        mkdirp(prefix + '/man/man1')
-        mkdirp(prefix.lib)
-        mkdirp(prefix.include)
-
-        bins = ['mdb_stat', 'mdb_copy', 'mdb_dump', 'mdb_load']
-        for f in bins:
-            install(f, prefix.bin)
-
-        mans = ['mdb_stat.1', 'mdb_copy.1', 'mdb_dump.1', 'mdb_load.1']
-        for f in mans:
-            install(f, prefix + '/man/man1')
-
-        libs = ['liblmdb.a', 'liblmdb.so']
-        for f in libs:
-            install(f, prefix.lib)
-
-        includes = ['lmdb.h']
-        for f in includes:
-            install(f, prefix.include)
+        python('setup.py', 'install', '--prefix=%s' % prefix)
