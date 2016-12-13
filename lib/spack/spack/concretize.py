@@ -252,8 +252,12 @@ class DefaultConcretizer(object):
         DAG has an architecture, then use the root otherwise use the defaults
         on the platform.
         """
-        root_arch = spec.root.architecture
-        sys_arch = spack.spec.ArchSpec(spack.architecture.sys_type())
+        root_arch = spec.link_root().architecture
+        if spec.build_dep() and spec.disjoint_build_tree():
+            sys_arch = spack.spec.ArchSpec(
+                spack.architecture.frontend_sys_type())
+        else:
+            sys_arch = spack.spec.ArchSpec(spack.architecture.sys_type())
         spec_changed = False
 
         if spec.architecture is None:
@@ -304,10 +308,12 @@ class DefaultConcretizer(object):
            build with the compiler that will be used by libraries that
            link to this one, to maximize compatibility.
         """
-        # Pass on concretizing the compiler if the target is not yet determined
-        if not spec.architecture.platform_os:
-            # Although this usually means changed, this means awaiting other
-            # changes
+        # Pass on concretizing the compiler if the target or operating system
+        # is not yet determined
+        if not (spec.architecture.platform_os and spec.architecture.target):
+            # We haven't changed, but other changes need to happen before we
+            # continue. `return True` here to force concretization to keep
+            # running.
             return True
 
         # Only use a matching compiler if it is of the proper style
@@ -324,14 +330,21 @@ class DefaultConcretizer(object):
                 spec.compiler in all_compilers):
             return False
 
-        # Find the another spec that has a compiler, or the root if none do
-        other_spec = spec if spec.compiler else find_spec(
-            spec, lambda x: x.compiler)
+        if spec.compiler:
+            other_spec = spec
+        elif spec.build_dep() and spec.disjoint_build_tree():
+            link_root = spec.link_root()
+            build_subtree = list(link_root.traverse(direction='children'))
+            candidates = list(x for x in build_subtree if x.compiler)
+            other_spec = candidates[0] if candidates else link_root
+        else:
+            # Find another spec that has a compiler, or the root if none do.
+            # Prefer compiler info from other specs which are not build deps.
+            other_spec = (
+                find_spec(spec, lambda x: x.compiler and not x.build_dep()) or
+                spec.root)
 
-        if not other_spec:
-            other_spec = spec.root
         other_compiler = other_spec.compiler
-        assert(other_spec)
 
         # Check if the compiler is already fully specified
         if other_compiler in all_compilers:
@@ -348,7 +361,8 @@ class DefaultConcretizer(object):
         if not matches:
             arch = spec.architecture
             raise UnavailableCompilerVersionError(other_compiler,
-                                                  arch.platform_os)
+                                                  arch.platform_os,
+                                                  arch.target)
 
         # copy concrete version into other_compiler
         try:
@@ -357,7 +371,8 @@ class DefaultConcretizer(object):
                 if _proper_compiler_style(c, spec.architecture)).copy()
         except StopIteration:
             raise UnavailableCompilerVersionError(
-                spec.compiler, spec.architecture.platform_os
+                spec.compiler, spec.architecture.platform_os,
+                spec.architecture.target
             )
 
         assert(spec.compiler.concrete)
@@ -369,22 +384,28 @@ class DefaultConcretizer(object):
         compiler is used, defaulting to no compiler flags in the spec.
         Default specs set at the compiler level will still be added later.
         """
-
-        if not spec.architecture.platform_os:
-            # Although this usually means changed, this means awaiting other
-            # changes
+        # Pass on concretizing the compiler flags if the target or operating
+        # system is not set.
+        if not (spec.architecture.platform_os and spec.architecture.target):
+            # We haven't changed, but other changes need to happen before we
+            # continue. `return True` here to force concretization to keep
+            # running.
             return True
+
+        def compiler_match(spec1, spec2):
+            return ((spec1.compiler, spec1.architecture) ==
+                    (spec2.compiler, spec2.architecture))
 
         ret = False
         for flag in spack.spec.FlagMap.valid_compiler_flags():
             try:
                 nearest = next(p for p in spec.traverse(direction='parents')
-                               if ((p.compiler == spec.compiler and
-                                    p is not spec) and
+                               if ((p is not spec) and
+                                   compiler_match(p, spec) and
                                    flag in p.compiler_flags))
-                if flag not in spec.compiler_flags or \
-                        not (sorted(spec.compiler_flags[flag]) >=
-                             sorted(nearest.compiler_flags[flag])):
+                if (flag not in spec.compiler_flags or
+                        (set(nearest.compiler_flags[flag]) -
+                            set(spec.compiler_flags[flag]))):
                     if flag in spec.compiler_flags:
                         spec.compiler_flags[flag] = list(
                             set(spec.compiler_flags[flag]) |
@@ -395,10 +416,11 @@ class DefaultConcretizer(object):
                     ret = True
 
             except StopIteration:
-                if (flag in spec.root.compiler_flags and
-                    ((flag not in spec.compiler_flags) or
-                     sorted(spec.compiler_flags[flag]) !=
-                     sorted(spec.root.compiler_flags[flag]))):
+                if (compiler_match(spec.root, spec) and
+                        flag in spec.root.compiler_flags and
+                        ((flag not in spec.compiler_flags) or
+                            (set(spec.root.compiler_flags[flag]) -
+                                set(spec.compiler_flags[flag])))):
                     if flag in spec.compiler_flags:
                         spec.compiler_flags[flag] = list(
                             set(spec.compiler_flags[flag]) |
@@ -422,10 +444,8 @@ class DefaultConcretizer(object):
                 if compiler.flags[flag] != []:
                     ret = True
             else:
-                if ((sorted(spec.compiler_flags[flag]) !=
-                     sorted(compiler.flags[flag])) and
-                    (not set(spec.compiler_flags[flag]) >=
-                     set(compiler.flags[flag]))):
+                if (set(compiler.flags[flag]) -
+                        set(spec.compiler_flags[flag])):
                     ret = True
                     spec.compiler_flags[flag] = list(
                         set(spec.compiler_flags[flag]) |
@@ -504,10 +524,11 @@ class UnavailableCompilerVersionError(spack.error.SpackError):
     """Raised when there is no available compiler that satisfies a
        compiler spec."""
 
-    def __init__(self, compiler_spec, operating_system):
+    def __init__(self, compiler_spec, operating_system, target):
         super(UnavailableCompilerVersionError, self).__init__(
             "No available compiler version matches '%s' on operating_system %s"
-            % (compiler_spec, operating_system),
+            "for target %s"
+            % (compiler_spec, operating_system, target),
             "Run 'spack compilers' to see available compiler Options.")
 
 

@@ -22,18 +22,36 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
-from spack import *
-import sys
+"""Yaml Version Check is a module for ensuring that config file
+formats are compatible with the current version of Spack."""
+import os.path
+import os
+import llnl.util.tty as tty
+import spack.util.spack_yaml as syaml
+import spack.config
 
 
-class Numdiff(AutotoolsPackage):
-    """Numdiff is a little program that can be used to compare putatively
-    similar files line by line and field by field, ignoring small numeric
-    differences or/and different numeric formats."""
+def pre_run():
+    check_compiler_yaml_version()
 
-    homepage  = 'https://www.nongnu.org/numdiff'
-    url       = 'http://nongnu.askapache.com/numdiff/numdiff-5.8.1.tar.gz'
 
-    version('5.8.1',    'a295eb391f6cb1578209fc6b4f9d994e')
+def check_compiler_yaml_version():
+    config_scopes = spack.config.config_scopes
+    for scope in config_scopes.values():
+        file_name = os.path.join(scope.path, 'compilers.yaml')
+        data = None
+        if os.path.isfile(file_name):
+            with open(file_name) as f:
+                data = syaml.load(f)
 
-    depends_on('gettext', when=sys.platform == 'darwin')
+        if data:
+            compilers = data['compilers']
+            if len(compilers) > 0:
+                if (not isinstance(compilers, list) or
+                    'operating_system' not in compilers[0]['compiler']):
+                    new_file = os.path.join(scope.path, '_old_compilers.yaml')
+                    tty.warn('%s in out of date compilers format. '
+                             'Moved to %s. Spack automatically generate '
+                             'a compilers config file '
+                             % (file_name, new_file))
+                    os.rename(file_name, new_file)
