@@ -15,6 +15,7 @@ class Cudnn(Package):
             join_path(self.stage.source_path, 'lib64'),
             prefix.lib
         )
+        os.symlink(prefix.lib64,prefix.lib)
         install_tree(
             join_path(self.stage.source_path, 'include'),
             prefix.include
