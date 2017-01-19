@@ -14,7 +14,7 @@ class Gaussian(Package):
         distutils.dir_util.copy_tree(".", prefix + '/g09')
 
     def setup_environment(self, spack_env, run_env):
-        run_env.set('g09root', prefix + '/g09')
+        run_env.set('g09root', prefix)
         run_env.set('GAUSS_EXEDIR', prefix + '/g09/bsd:' + prefix + '/g09/local:' + prefix + '/g09')
         run_env.set('GAUSS_LEXEDIR', prefix + '/g09/linda-exe')
         run_env.set('GAUSS_ARCHDIR', prefix + '/g09/arch')
