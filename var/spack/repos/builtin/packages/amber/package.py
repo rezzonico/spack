@@ -89,6 +89,7 @@ class Amber(Package):
                 '--with-python {0}'.format(
                     join_path(spec['python'].prefix, 'bin', 'python')
                 ),
+                '-noX11'
             ]
 
             if '+openmp' in spec:
