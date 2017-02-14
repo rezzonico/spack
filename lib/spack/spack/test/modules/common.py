@@ -22,22 +22,32 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
-import spack.modules
-import llnl.util.tty as tty
 
-try:
-    enabled = spack.modules.common.configuration['enable']
-except KeyError:
-    tty.debug('NO MODULE WRITTEN: list of enabled module files is empty')
-    enabled = []
+import spack.modules.common
 
 
-def _for_each_enabled(pkg, method_name):
-    """Calls a method for each enabled module"""
-    for name in enabled:
-        generator = spack.modules.module_types[name](pkg.spec)
-        getattr(generator, method_name)()
-
-
-post_install = lambda pkg: _for_each_enabled(pkg, 'write')
-post_uninstall = lambda pkg: _for_each_enabled(pkg, 'remove')
+def test_update_dictionary_extending_list():
+    target = {
+        'foo': {
+            'a': 1,
+            'b': 2,
+            'd': 4
+        },
+        'bar': [1, 2, 4],
+        'baz': 'foobar'
+    }
+    update = {
+        'foo': {
+            'c': 3,
+        },
+        'bar': [3],
+        'baz': 'foobaz',
+        'newkey': {
+            'd': 4
+        }
+    }
+    spack.modules.common.update_dictionary_extending_lists(target, update)
+    assert len(target) == 4
+    assert len(target['foo']) == 4
+    assert len(target['bar']) == 4
+    assert target['baz'] == 'foobaz'
