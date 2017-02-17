@@ -25,20 +25,28 @@
 
 from spack import *
 
-class Libgpuarray(Package):
-    """Libgpuarray goal's is to make a common GPU ndarray(n dimensions array) that can be reused by all projects that is as future proof as possible, while keeping it easy to use for simple need/quick test."""
-    homepage = "http://deeplearning.net/software/libgpuarray/"
-    url      = "https://github.com/Theano/libgpuarray/archive/v0.6.0-rc2.tar.gz"
+class PyTheano(Package):
+    """Theano is a Python library that allows you to define, optimize, and evaluate mathematical expressions involving multi-dimensional arrays efficiently."""
+    homepage = "http://deeplearning.net/software/theano/"
+    url      = "https://github.com/Theano/Theano/archive/rel-0.8.2.tar.gz"
 
-    version('0.6.0-rc2', '304963e8d3b01d48a34b0912d77fae3a')
-    version('0.6.0-rc1', '23592d7a45f96226b4ab8691c53e0b2d')
+    version('0.8.2', 'a15eb23bc9126d598cf9a5199316167a',pip='Theano',version='0.8.2')
+    version('0.8.1', 'f101376043a171d7c007747d1b2640a3',pip='Theano',version='0.8.1')
+    version('0.8.0', 'd9f5e9e4fb5610af64ad585e2a59955b',pip='Theano',version='0.8.0')
+    version('0.7'  , 'ead841db54205aff182e022e0a1e2d91',pip='Theano',version='0.7')
+    version('0.6'  , '338d864eae2084bf96aa6b05b5890332',pip='Theano',version='0.6')
 
     extends('python')
-    depends_on('cuda')
-    depends_on('cmake@3.0.0:')
+    depends_on('py-pip')
+    depends_on('py-numpy')
+    depends_on('py-scipy')
+    depends_on('py-nose')
+    depends_on('py-six')
+    variant('cuda', default=False, description="Enable CUDA support")
+    depends_on('cuda', when='+cuda')
+    depends_on('libgpuarray',when='+cuda')
+    depends_on('cudnn',when='+cuda')
+
 
     def install(self, spec, prefix):
-        cmake('.', *std_cmake_args)
-
-        make()
-        make("install")
+        pip('install', *std_pip_args)
