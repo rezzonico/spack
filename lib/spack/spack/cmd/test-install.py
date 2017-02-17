@@ -89,10 +89,13 @@ class TestSuite(object):
         for item in self.tests:
             self.root.append(item.element)
 
-        with open(self.filename, 'wb') as file:
-            xml_string = ET.tostring(self.root)
-            xml_string = xml.dom.minidom.parseString(xml_string).toprettyxml()
-            file.write(xml_string)
+        try:
+            with open(self.filename, 'wb') as file:
+                xml_string = ET.tostring(self.root)
+                xml_string = xml.dom.minidom.parseString(xml_string).toprettyxml()
+                file.write(xml_string)
+        except Exception:
+            pass
 
 
 class TestCase(object):
