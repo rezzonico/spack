@@ -53,6 +53,7 @@ class IntelMkl(IntelInstaller):
     variant('openmp', default=False, description='OpenMP multithreading layer')
 
     # virtual dependency
+    depends_on('mpi')
     provides('blas')
     provides('lapack')
     provides('scalapack')
@@ -73,9 +74,9 @@ class IntelMkl(IntelInstaller):
             shared=shared
         )
         system_libs = [
-            'libpthread.{0}'.format(suffix),
-            'libm.{0}'.format(suffix),
-            'libdl.{0}'.format(suffix)
+            '-lpthread',
+            '-lm',
+            '-ldl'
         ]
         return mkl_libs + system_libs
 
@@ -86,7 +87,14 @@ class IntelMkl(IntelInstaller):
     @property
     def scalapack_libs(self):
         libnames = ['libmkl_scalapack']
-        if self.spec.satisfies('^openmpi'):
+        #it could be a bug in the concretization
+        #I got SPECS are intel-mkl@11.3.3%intel@16.0.3~ilp64~openmp+shared arch=linux-rhel6-x86_64
+        #I installed elpa with spack install -v elpa +openmp ^intel-mkl %intel.
+        #The intelmpi does not appear in the spec
+        print 'SPECS are',self.spec
+        if self.spec.satisfies('^intelmpi'):
+            libnames.append('libmkl_blacs_intelmpi')
+        elif self.spec.satisfies('^openmpi'):
             libnames.append('libmkl_blacs_openmpi')
         elif self.spec.satisfies('^mpich@1'):
             libnames.append('libmkl_blacs')

@@ -24,6 +24,7 @@
 ##############################################################################
 
 from spack import *
+import shutil
 
 
 class Elpa(Package):
@@ -34,6 +35,7 @@ class Elpa(Package):
     homepage = 'http://elpa.mpcdf.mpg.de/'
     url = 'http://elpa.mpcdf.mpg.de/elpa-2015.11.001.tar.gz'
 
+    version('2016.05.004', 'c0dd3a53055536fc3a2a221e78d8b376', url='https://elpa.mpcdf.mpg.de/html/Releases/2016.05.004/elpa-2016.05.004.tar.gz')
     version(
         '2016.05.003',
         '88a9f3f3bfb63e16509dd1be089dcf2c',
@@ -53,7 +55,6 @@ class Elpa(Package):
     depends_on('scalapack')
 
     def install(self, spec, prefix):
-
         options = [
             'CC={0}'.format(self.spec['mpi'].mpicc),
             'FC={0}'.format(self.spec['mpi'].mpifc),
@@ -79,3 +80,6 @@ class Elpa(Package):
         configure(*options)
         make()
         make("install")
+
+        shutil.copytree('modules', join_path(prefix.include,'modules'))
+        shutil.copytree('private_modules', join_path(prefix.include,'private_modules')) 
