@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from spack import *
 import os
 
@@ -34,4 +35,5 @@ class Tensorflow(Package):
           venv_path='/ssoft/spack/external/tensorflow/0.10.0rc0/tensorflow_venv_cpu'
           run_env.set('VIRTUAL_ENV',venv_path)
           run_env.prepend_path('PATH',venv_path+'/bin')
+
 
