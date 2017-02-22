@@ -1,4 +1,5 @@
 from spack import *
+import os
 
 import spack.environment
 
@@ -24,7 +25,13 @@ class Tensorflow(Package):
     def setup_environment(self, spack_env, run_env):
 
         if '+cuda' in self.spec:   
-          run_env.set('TENSORFLOW_ROOT',  '/ssoft/spack/external/tensorflow/tensorflow_venv_gpu')
+          run_env.set('TENSORFLOW_ROOT',  '/ssoft/spack/external/tensorflow/0.10.0rc0/tensorflow_venv_gpu')
+          venv_path='/ssoft/spack/external/tensorflow/0.10.0rc0/tensorflow_venv_gpu'
+          run_env.set('VIRTUAL_ENV',venv_path)
+          run_env.prepend_path('PATH',venv_path+'/bin')
         else:
-          run_env.set('TENSORFLOW_ROOT',  '/ssoft/spack/external/tensorflow/tensorflow_venv_cpu')
-          
+          run_env.set('TENSORFLOW_ROOT',  '/ssoft/spack/external/tensorflow/0.10.0rc0/tensorflow_venv_cpu')
+          venv_path='/ssoft/spack/external/tensorflow/0.10.0rc0/tensorflow_venv_cpu'
+          run_env.set('VIRTUAL_ENV',venv_path)
+          run_env.prepend_path('PATH',venv_path+'/bin')
+
