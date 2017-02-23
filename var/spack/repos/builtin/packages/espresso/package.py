@@ -28,20 +28,24 @@ import os
 
 
 class Espresso(Package):
-    """
-    Quantum-ESPRESSO is an integrated suite of Open-Source computer codes for
+
+    """Quantum-ESPRESSO is an integrated suite of Open-Source computer codes for
     electronic-structure calculations and materials modeling at
     the nanoscale. It is based on density-functional theory, plane
     waves, and pseudopotentials.
     """
     homepage = 'http://quantum-espresso.org'
-    url = 'http://qe-forge.org/gf/download/frsrelease/224/1044/qe-6.0.tar.gz'
+    base_url = 'http://qe-forge.org/gf/download/frsrelease'
 
-    version('6.0','e42aeeffadf7951542d8561a6b4a3390',url = 'http://qe-forge.org/gf/download/frsrelease/224/1044/qe-6.0.tar.gz')
-    version(
-        '5.4.0','8bb78181b39bd084ae5cb7a512c1cfe7',url='http://www.qe-forge.org/gf/download/frsrelease/211/968/espresso-5.4.0.tar.gz'
-    )
+    version('6.0','e42aeeffadf7951542d8561a6b4a3390')
+    version('5.4.0','8bb78181b39bd084ae5cb7a512c1cfe7')
     version('5.3.0', '6848fcfaeb118587d6be36bd10b7f2c3')
+
+    def url_for_version(self, version):
+        versions = {'6.0':'224/1044', '5.4.0':'211/968', '5.3.0':'204/912'}
+        return '%s/%s-qe-%s.tar.gz' % \
+            (Espresso.base_url,versions[str(version)], version)
+
 
     variant('mpi', default=True, description='Builds with mpi support')
     variant('openmp', default=False, description='Enables openMP support')
@@ -89,24 +93,17 @@ class Espresso(Package):
               options.append('--with-scalapack=yes')
 
         if '+elpa+openmp' in spec:
-            options.append('--with-elpa-include=-I%s'% spec['elpa'].prefix.include+"/modules")
-            options.append('--with-elpa-lib=%s'% spec['elpa'].prefix.lib+'/libelpa_openmp.a')
+            options.append('--with-elpa-include=-I%s'% join_path(spec['elpa'].prefix.include,"modules"))
+            options.append('--with-elpa-lib=%s'% join_path(spec['elpa'].prefix.lib,'libelpa_openmp.a'))
         elif '+elpa'  in spec:
-            options.append('--with-elpa-include=-I%s'% spec['elpa'].prefix.include+"/modules")
-            options.append('--with-elpa-lib=%s'% spec['elpa'].prefix.lib+'/libelpa.a')
+            options.append('--with-elpa-include=-I%s'% join_path(spec['elpa'].prefix.include,"modules"))
+            options.append('--with-elpa-lib=%s'% join_path(spec['elpa'].prefix.lib,'libelpa.a'))
 
-        #Add a list of directories to search
-        #The libe below should not be needed anymore
-        #search_list = []
-        #for name, dependency_spec in spec.dependencies.iteritems():
-        #    search_list.extend([dependency_spec.prefix.lib,
-        #                        dependency_spec.prefix.lib64])
 
-        #search_list = " ".join(search_list)
-        #options.append('LIBDIRS=%s' % search_list)
         
         if '%intel' in self.spec:
-          options.append('MPIF90=mpiifort')
+            options.append('MPIF90=mpiifort')
+
         options.append('F90=%s' % os.environ['SPACK_FC'])
         options.append('CC=%s' % os.environ['SPACK_CC'])
 

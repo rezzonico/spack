@@ -33,19 +33,15 @@ class Elpa(Package):
     """
 
     homepage = 'http://elpa.mpcdf.mpg.de/'
-    url = 'http://elpa.mpcdf.mpg.de/elpa-2015.11.001.tar.gz'
+    base_url = 'http://elpa.mpcdf.mpg.de/html/Releases'
 
-    version('2016.05.004', 'c0dd3a53055536fc3a2a221e78d8b376', url='https://elpa.mpcdf.mpg.de/html/Releases/2016.05.004/elpa-2016.05.004.tar.gz')
-    version(
-        '2016.05.003',
-        '88a9f3f3bfb63e16509dd1be089dcf2c',
-        url='http://elpa.mpcdf.mpg.de/html/Releases/2016.05.003/elpa-2016.05.003.tar.gz'
-    )
-    version(
-        '2015.11.001',
-        'de0f35b7ee7c971fd0dca35c900b87e6',
-        url='http://elpa.mpcdf.mpg.de/elpa-2015.11.001.tar.gz'
-    )
+    version('2016.05.004', 'c0dd3a53055536fc3a2a221e78d8b376')
+    version('2016.05.003','88a9f3f3bfb63e16509dd1be089dcf2c')
+    version('2015.11.001','de0f35b7ee7c971fd0dca35c900b87e6')
+
+    def url_for_version(self, version):
+        return '%s/elpa-%s.tar.gz' % \
+            (Elpa.base_url, version)
 
     variant('openmp', default=False, description='Activates OpenMP support')
 
@@ -80,6 +76,5 @@ class Elpa(Package):
         configure(*options)
         make()
         make("install")
-
-        shutil.copytree('modules', join_path(prefix.include,'modules'))
-        shutil.copytree('private_modules', join_path(prefix.include,'private_modules')) 
+        install_tree('modules', join_path(prefix.include,'modules'))
+        install_tree('private_modules', join_path(prefix.include,'private_modules')) 
