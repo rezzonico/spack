@@ -86,7 +86,7 @@ class IntelMkl(IntelInstaller):
     @property
     def scalapack_libs(self):
         libnames = ['libmkl_scalapack']
-        elif self.spec.satisfies('^openmpi'):
+        if self.spec.satisfies('^openmpi'):
             libnames.append('libmkl_blacs_openmpi')
         elif self.spec.satisfies('^mpich@1'):
             libnames.append('libmkl_blacs')
