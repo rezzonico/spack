@@ -74,7 +74,7 @@ class IntelMkl(IntelInstaller):
         )
         system_libs = [
             'libpthread.{0}'.format(suffix),
-            'libm.{0}'.format(suffix), 
+            'libm.{0}'.format(suffix),
             'libdl.{0}'.format(suffix)
         ]
         return mkl_libs + system_libs
