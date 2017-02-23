@@ -96,6 +96,7 @@ class Lammps(Package):
         # specific to EPFL installation, remove before PR upstream
         if 'intelmpi' in self.spec:
             mpi_path = self.spec['mpi'].prefix.lib64
+            mpi_inc = mpi_inc + '64'
 
         config.append(
             'MPI_INC = -DMPICH_SKIP_MPICXX -DOMPI_SKIP_MPICXX=1 -I{0}'.format(
