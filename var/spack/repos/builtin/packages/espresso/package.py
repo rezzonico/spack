@@ -43,7 +43,7 @@ class Espresso(Package):
 
     def url_for_version(self, version):
         versions = {'6.0':'224/1044', '5.4.0':'211/968', '5.3.0':'204/912'}
-        return '%s/%s-qe-%s.tar.gz' % \
+        return '%s/%s/qe-%s.tar.gz' % \
             (Espresso.base_url,versions[str(version)], version)
 
 

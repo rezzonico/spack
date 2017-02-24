@@ -24,7 +24,6 @@
 ##############################################################################
 
 from spack import *
-import shutil
 
 
 class Elpa(Package):
@@ -33,15 +32,16 @@ class Elpa(Package):
     """
 
     homepage = 'http://elpa.mpcdf.mpg.de/'
-    base_url = 'http://elpa.mpcdf.mpg.de/html/Releases'
+    url = 'http://elpa.mpcdf.mpg.de/elpa-2015.11.001.tar.gz'
+    base_url = 'https://elpa.mpcdf.mpg.de/html/Releases'
 
     version('2016.05.004', 'c0dd3a53055536fc3a2a221e78d8b376')
     version('2016.05.003','88a9f3f3bfb63e16509dd1be089dcf2c')
     version('2015.11.001','de0f35b7ee7c971fd0dca35c900b87e6')
 
     def url_for_version(self, version):
-        return '%s/elpa-%s.tar.gz' % \
-            (Elpa.base_url, version)
+        return '%s/%s/elpa-%s.tar.gz' % \
+            (Elpa.base_url, version,version)
 
     variant('openmp', default=False, description='Activates OpenMP support')
 
