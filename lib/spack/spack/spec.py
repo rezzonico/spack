@@ -1651,7 +1651,7 @@ class Spec(object):
             if s.namespace is None:
                 s.namespace = spack.repo.repo_for_pkg(s.name).namespace
 
-        for s in self.traverse(root=False):
+        for s in self.traverse():
             if s.external_module:
                 compiler = spack.compilers.compiler_for_spec(
                     s.compiler, s.architecture)
