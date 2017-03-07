@@ -25,6 +25,7 @@ class Mkl(Package):
         spack_env.set('MKL_HOME', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
         spack_env.set('LAPACK_DIR', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
         spack_env.set('BLAS_DIR', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl')
+        spack_env.set('CMAKE_LIBRARY_PATH', '/ssoft/spack/external/intel/2016/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64')
 
     def setup_dependent_package(self, module, dependent_spec):
         spec = self.spec

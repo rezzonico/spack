@@ -1,0 +1,286 @@
+diff -Naur simpson-master.orig/CMakeLists.txt simpson-master/CMakeLists.txt
+--- simpson-master.orig/CMakeLists.txt	1970-01-01 01:00:00.000000000 +0100
++++ simpson-master/CMakeLists.txt	2017-03-06 22:50:55.220972456 +0100
+@@ -0,0 +1,86 @@
++cmake_minimum_required (VERSION 2.8.2)
++
++project (SIMPSON C)
++
++find_package (BLAS REQUIRED)
++find_package (LAPACK REQUIRED)
++find_package (TCL REQUIRED)
++find_package (Threads REQUIRED)
++
++option(SIMPSON_MPI "Compiles MPI support" ON)
++option(SIMPSON_GSL "Compiles GSL support" ON)
++
++if(SIMPSON_MPI)
++  find_package (MPI)
++endif()
++
++if(SIMPSON_GSL)
++  find_package (GSL)
++endif()
++
++# fftw3
++find_library (FFTW3_LIBRARIES fftw3)
++find_path (FFTW3_INCLUDE_DIRS "fftw3.h" PATH_SUFFIXES "fftw3")
++
++find_library(NFFT3_LIBRARIES nfft3)
++find_path(NFFT3_INCLUDE_DIRS "nfft3.h")
++
++add_executable(simpson
++  allocation.c
++  auxmath.c
++  averaging.c
++  B0inhom.c
++  blockdiag.c
++  cm.c
++  cryst.c
++  crystdat.c
++  distortions.c
++  fft.c
++  fidcalc.c
++  ftools.c
++  ham.c
++  iodata.c
++  isotopes.c
++  lbfgs.c
++  main.c
++  matrix.c
++  OCroutines.c
++  pthread_barrier_mac.c
++  pulse.c
++  readsys.c
++  relax.c
++  rfprof.c
++  rfshapes.c
++  sim.c
++  simpson.c
++  spinach.c
++  spinsys.c
++  tclcode.c
++  tclutil.c
++  wigner.c
++  complx.c)
++
++if (GSL_FOUND)
++  target_compile_definitions(simpson PRIVATE -DGSL)
++  target_link_libraries (simpson ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY})
++endif ()
++
++if (MPI_FOUND)
++  target_include_directories(simpson PRIVATE ${MPI_C_INCLUDE_PATH})
++  target_link_libraries(simpson ${MPI_LIBRARIES})
++  target_compile_definitions(simpson PRIVATE -DMPI)
++endif ()
++
++target_link_libraries(simpson m
++  ${CMAKE_THREAD_LIBS_INIT}
++  ${TCL_LIBRARY}
++  ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
++  ${FFTW3_LIBRARIES}
++  ${NFFT3_LIBRARIES})
++
++target_include_directories(simpson PRIVATE
++  ${TCL_INCLUDE_DIRS}
++  ${FFTW3_INCLUDE_DIRS}
++  ${NFFT3_INCLUDE_DIRS})
++
++install(TARGETS simpson DESTINATION bin)
+diff -Naur simpson-master.orig/complx.c simpson-master/complx.c
+--- simpson-master.orig/complx.c	2016-04-01 11:40:11.000000000 +0200
++++ simpson-master/complx.c	2017-03-06 22:47:46.216918639 +0100
+@@ -26,37 +26,9 @@
+ complx Cnull={0.0,0.0};
+ complx Cunit={1.0,0.0};
+ 
+-inline complx Complx(double re,double im)
+-{
+-  complx c;
+-
+-  c.re=re;
+-  c.im=im;
+-  return c;
+-}
+-
+-inline complx Cmul(complx a,complx b)
+-{
+-  complx c;
+-
+-  c.re=a.re*b.re-a.im*b.im;
+-  c.im=a.im*b.re+a.re*b.im;
+-  return c;
+-}
+-
+-inline complx Cadd(complx a,complx b)
+-{
+-  complx c;
+-  c.re=a.re+b.re;
+-  c.im=a.im+b.im;
+-  return c;
+-}
+-
+-inline complx Conj(complx z)
+-{
+-  z.im= -z.im;
+-  return z;
+-}
++#ifdef __APPLE__
++#include "complx_inline.h"
++#endif
+ 
+ complx Cneg(complx a)
+ {
+@@ -144,20 +116,6 @@
+   }
+ }
+ 
+-complx RCmul(double x,complx a)
+-{
+-  a.re *= x;
+-  a.im *= x;
+-  return a;
+-}
+-
+-inline complx CRmul(complx a,double x)
+-{
+-  a.re *= x;
+-  a.im *= x;
+-  return a;
+-}
+-
+ complx Cexp(complx z)
+ {
+   double f;
+@@ -168,14 +126,6 @@
+   return z;
+ }
+ 
+-inline complx Cexpi(double im)
+-{
+-  complx z;
+-  z.re=cos(im);
+-  z.im=sin(im);
+-  return z;
+-}
+-
+ complx CRexp(double re,double im)
+ {
+   complx z;
+diff -Naur simpson-master.orig/complx.h simpson-master/complx.h
+--- simpson-master.orig/complx.h	2016-04-01 11:40:11.000000000 +0200
++++ simpson-master/complx.h	2017-03-06 22:47:46.217918618 +0100
+@@ -49,12 +49,16 @@
+     complx Cmul(complx a,complx b);
+     complx Conj(complx z);
+     complx Cexpi(double im);
++    complx CRmul(complx a,double x);
++    complx RCmul(double x,complx a);
+ #else
+     inline complx Complx(double re,double im);
+     inline complx Cadd(complx a,complx b);
+     inline complx Cmul(complx a,complx b);
+     inline complx Conj(complx z);
+     inline complx Cexpi(double im);
++    inline complx CRmul(complx a,double x);
++    inline complx RCmul(double x,complx a);
+ #endif
+ 
+ 
+@@ -64,8 +68,6 @@
+ complx Cdiv(complx a,complx b);
+ double  Cabs(complx z);
+ complx Csqrt(complx z);
+-inline complx RCmul(double x,complx a);
+-complx CRmul(complx a,double x);
+ complx Cexp(complx z);
+ complx CRexp(double re,double im);
+ complx Cacos(complx z);
+@@ -88,6 +90,8 @@
+ extern complx Cnull;
+ extern complx Cunit;
+ 
++#include "complx_inline.h"
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff -Naur simpson-master.orig/complx_inline.h simpson-master/complx_inline.h
+--- simpson-master.orig/complx_inline.h	1970-01-01 01:00:00.000000000 +0100
++++ simpson-master/complx_inline.h	2017-03-06 22:47:46.217918618 +0100
+@@ -0,0 +1,53 @@
++inline complx Complx(double re,double im)
++{
++  complx c;
++
++  c.re=re;
++  c.im=im;
++  return c;
++}
++
++inline complx Cmul(complx a,complx b)
++{
++  complx c;
++
++  c.re=a.re*b.re-a.im*b.im;
++  c.im=a.im*b.re+a.re*b.im;
++  return c;
++}
++
++inline complx Cadd(complx a,complx b)
++{
++  complx c;
++  c.re=a.re+b.re;
++  c.im=a.im+b.im;
++  return c;
++}
++
++inline complx Conj(complx z)
++{
++  z.im= -z.im;
++  return z;
++}
++
++inline complx CRmul(complx a,double x)
++{
++  a.re *= x;
++  a.im *= x;
++  return a;
++}
++
++inline complx Cexpi(double im)
++{
++  complx z;
++  z.re=cos(im);
++  z.im=sin(im);
++  return z;
++}
++
++inline complx RCmul(double x,complx a)
++{
++  a.re *= x;
++  a.im *= x;
++  return a;
++}
+diff -Naur simpson-master.orig/simpson.c simpson-master/simpson.c
+--- simpson-master.orig/simpson.c	2016-04-01 11:40:11.000000000 +0200
++++ simpson-master/simpson.c	2017-03-06 22:47:46.217918618 +0100
+@@ -40,7 +40,7 @@
+ 
+ #ifndef NO_NFFT
+ //#include <complex.h>
+-#include "nfft3util.h"
++//#include "nfft3util.h"
+ #include "nfft3.h"
+ #endif
+ 
+@@ -1453,7 +1453,7 @@
+ 		free_complx_vector(fidsum);
+ 		if (OCpar.isinit && OCpar.gradmode) {
+ 			assert(phivals != NULL);
+-			MPI_Send(phivals, 2*(LEN(phival)+1), MPI_DOUBLE, 0, 999, MPI_COMM_WORLD);
++			MPI_Send(phivals, 2*(LEN(phivals)+1), MPI_DOUBLE, 0, 999, MPI_COMM_WORLD);
+ 			free_complx_vector(phivals);
+ 		}
+ 		free(state);
