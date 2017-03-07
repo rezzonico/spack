@@ -35,6 +35,7 @@ class Espresso(Package):
     waves, and pseudopotentials.
     """
     homepage = 'http://quantum-espresso.org'
+    url = 'http://www.qe-forge.org/gf/download/frsrelease/224/1044/qe-6.0.tar.gz'
     base_url = 'http://qe-forge.org/gf/download/frsrelease'
 
     version('6.0', 'e42aeeffadf7951542d8561a6b4a3390')
