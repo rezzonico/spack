@@ -1,0 +1,11 @@
+packages:
+{% for name, specs in packages.items() %}
+  {{ name }}:
+    paths:
+{% for s in specs %}
+      '{{ s.format('$_$@$%@$+$=') }}': {{ s.prefix }}
+{% endfor %}
+{% if not buildable %}
+    buildable: False
+{% endif %}
+{% endfor %}
