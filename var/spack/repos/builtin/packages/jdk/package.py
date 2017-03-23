@@ -22,12 +22,8 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
-#------------------------------------------------------------------------------
-# Author: Justin Too <too1@llnl.gov>
-#------------------------------------------------------------------------------
 import distutils
 from distutils import dir_util
-from subprocess import call
 
 import spack
 from spack import *
@@ -38,6 +34,8 @@ class Jdk(Package):
        in the form of a binary product aimed at Java developers."""
     homepage = "http://www.oracle.com/technetwork/java/javase/downloads/index.html"
 
+    version('8u92-linux-x64', '65a1cc17ea362453a6e0eb4f13be76e4',
+            url="http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.tar.gz")
     version('8u66-linux-x64', '88f31f3d642c3287134297b8c10e61bf',
         url="http://download.oracle.com/otn-pub/java/jdk/8u66-b17/jdk-8u66-linux-x64.tar.gz")
 
@@ -47,9 +45,9 @@ class Jdk(Package):
     # commandline options.
     #
     # See http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
-    curl_options=[
-        '-j', # junk cookies
-        '-H', # specify required License Agreement cookie
+    curl_options = [
+        '-j',  # junk cookies
+        '-H',  # specify required License Agreement cookie
         'Cookie: oraclelicense=accept-securebackup-cookie']
 
     def do_fetch(self, mirror_only=False):
@@ -65,6 +63,11 @@ class Jdk(Package):
         # Now perform the actual fetch
         super(Jdk, self).do_fetch(mirror_only)
 
-
     def install(self, spec, prefix):
         distutils.dir_util.copy_tree(".", prefix)
+
+    def setup_environment(self, spack_env, run_env):
+        run_env.set('JAVA_HOME', self.spec.prefix)
+
+    def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
+        spack_env.set('JAVA_HOME', self.spec.prefix)
