@@ -74,6 +74,8 @@ class Amber(Package):
                 join_path(self.prefix, 'amber16')
             )
         )
+        if '+cuda' in self.spec:
+            spack_env.set('CUDA_HOME', self.spec['cuda'].prefix)
 
     def install(self, spec, prefix):
 
@@ -117,4 +119,10 @@ class Amber(Package):
                 configure(*parallel_args)
                 make('install')
 
-            # TODO: CUDA version
+            if '+cuda' in spec:
+                configure_args.append('-cuda')
+                cuda_args = configure_args[:]
+                cuda_args.append(compiler_opts[self.compiler.name])
+                filter_file(r'(nvccflags=")(.*)(")',r'\1\2 $sm35flags \3','AmberTools/src/configure2')
+                configure(*cuda_args)
+                make('install')
