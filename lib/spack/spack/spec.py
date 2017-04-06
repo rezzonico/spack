@@ -2999,7 +2999,6 @@ class SpecParser(spack.parse.Parser):
         spec.variants = VariantMap(spec)
         spec.architecture = None
         spec.compiler = None
-        spec.external = False
         spec.external_path = None
         spec.external_module = None
         spec.compiler_flags = FlagMap(spec)
