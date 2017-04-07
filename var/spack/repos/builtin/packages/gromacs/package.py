@@ -39,8 +39,12 @@ class Gromacs(CMakePackage):
     """
 
     homepage = 'http://www.gromacs.org'
-    url = 'http://ftp.gromacs.org/gromacs/gromacs-5.1.2.tar.gz'
+    url = 'http://ftp.gromacs.org/pub/gromacs/gromacs-2016.3.tar.gz'
+    list_url = 'http://ftp.gromacs.org/pub/gromacs/'
 
+    version('2016.3', 'e9e3a41bd123b52fbcc6b32d09f8202b')
+    version('5.1.4', 'ba2e34d59b3982603b4935d650c08040')
+    version('5.1.3', '52f0f62dafa9fbe120d310fefb320c91')
     version('5.1.2', '614d0be372f1a6f1f36382b7a6fcab98')
 
     variant('mpi', default=True, description='Activate MPI support')
@@ -54,6 +58,7 @@ class Gromacs(CMakePackage):
     variant('cuda', default=False, description='Enable CUDA support')
 
     depends_on('mpi', when='+mpi')
+    depends_on('boost', when='@:5.1.4')
     depends_on('plumed+mpi', when='+plumed+mpi')
     depends_on('plumed~mpi', when='+plumed~mpi')
     depends_on('fftw')
@@ -69,22 +74,22 @@ class Gromacs(CMakePackage):
         options = []
 
         if '+mpi' in self.spec:
-            options.append('-DGMX_MPI:BOOL=ON')
+            options.append('-DGMX_MPI=ON')
 
         if '+double' in self.spec:
-            options.append('-DGMX_DOUBLE:BOOL=ON')
+            options.append('-DGMX_DOUBLE=ON')
 
         if '~shared' in self.spec:
-            options.append('-DBUILD_SHARED_LIBS:BOOL=OFF')
+            options.append('-DBUILD_SHARED_LIBS=OFF')
 
         if '+debug' in self.spec:
-            options.append('-DCMAKE_BUILD_TYPE:STRING=Debug')
+            options.append('-DCMAKE_BUILD_TYPE=Debug')
         else:
-            options.append('-DCMAKE_BUILD_TYPE:STRING=Release')
+            options.append('-DCMAKE_BUILD_TYPE=Release')
 
         if '+cuda' in self.spec:
-            options.append('-DGMX_GPU:BOOL=ON')
-            options.append('-DCUDA_TOOLKIT_ROOT_DIR:STRING=' +
+            options.append('-DGMX_GPU=ON')
+            options.append('-DCUDA_TOOLKIT_ROOT_DIR=' +
                            self.spec['cuda'].prefix)
 
         return options

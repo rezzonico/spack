@@ -43,6 +43,7 @@ class Plumed(AutotoolsPackage):
     homepage = 'http://www.plumed.org/'
     url = 'https://github.com/plumed/plumed2/archive/v2.2.3.tar.gz'
 
+    version('2.3.1', 'b12419923224ef9897427bfde39157a7')
     version('2.3.0', 'a9b5728f115dca8f0519111f1f5a6fa5')
     version('2.2.4', 'afb00da25a3fbd47acf377e53342059d')
     version('2.2.3', 'a6e3863e40aac07eb8cf739cbd14ecf8')
@@ -72,6 +73,17 @@ class Plumed(AutotoolsPackage):
     # Dictionary mapping PLUMED versions to the patches it provides
     # interactively
     plumed_patches = {
+        '2.3.1': {
+            'amber-14': '1',
+            'gromacs-2016.3': '2',
+            'gromacs-4.5.7': '3',
+            'gromacs-5.0.7': '4',
+            'gromacs-5.1.4': '5',
+            'lammps-6Apr13': '6',
+            'namd-2.8': '7',
+            'namd-2.9': '8',
+            'espresso-5.0.2': '9'
+        },
         '2.3.0': {
             'amber-14': '1',
             'gromacs-2016.1': '2',
