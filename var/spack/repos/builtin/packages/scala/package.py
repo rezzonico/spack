@@ -38,6 +38,7 @@ class Scala(Package):
 
     depends_on('jdk')
     version('2.12.1', '3eaecbce019b0fa3067503846e292b32')
+    version('2.11.11', '3f5b76001f60cbc31111ddb81de5ea07')
 
     def install(self, spec, prefix):
 
