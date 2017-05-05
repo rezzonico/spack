@@ -553,8 +553,8 @@ def find(root, files, recurse=True):
 def _find_recursive(root, search_files):
     found_files = []
 
-    for path, _, list_files in os.walk(root):
-        for search_file in search_files:
+    for search_file in search_files:
+        for path, _, list_files in os.walk(root):
             for list_file in list_files:
                 if fnmatch.fnmatch(list_file, search_file):
                     found_files.append(join_path(path, list_file))
@@ -565,8 +565,8 @@ def _find_recursive(root, search_files):
 def _find_non_recursive(root, search_files):
     found_files = []
 
-    for list_file in os.listdir(root):
-        for search_file in search_files:
+    for search_file in search_files:
+        for list_file in os.listdir(root):
             if fnmatch.fnmatch(list_file, search_file):
                 found_files.append(join_path(root, list_file))
 

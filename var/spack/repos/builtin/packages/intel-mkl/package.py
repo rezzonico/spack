@@ -96,19 +96,19 @@ class IntelMkl(IntelInstaller):
     @property
     def scalapack_libs(self):
         libnames = ['libmkl_scalapack']
-        if self.spec.satisfies('^openmpi'):
+	root = self.spec.root
+        if '^openmpi' in root:
             libnames.append('libmkl_blacs_openmpi')
-        elif self.spec.satisfies('^mpich@1'):
+        elif '^mpich@1' in root:
             libnames.append('libmkl_blacs')
-        elif self.spec.satisfies('^mpich@2:'):
+        elif '^mpich@2:' in root:
             libnames.append('libmkl_blacs_intelmpi')
-        elif self.spec.satisfies('^mvapich2'):
+        elif '^mvapich2' in root:
             libnames.append('libmkl_blacs_intelmpi')
-        elif self.spec.satisfies('^mpt'):
+        elif '^mpt' in root:
             libnames.append('libmkl_blacs_sgimpt')
-        # TODO: ^intel-parallel-studio can mean intel mpi, a compiler or a lib
-        # elif self.spec.satisfies('^intel-parallel-studio'):
-        #     libnames.append('libmkl_blacs_intelmpi')
+        elif 'intel-mpi' in root:
+            libnames.append('libmkl_blacs_intelmpi')
         else:
             raise InstallError("No MPI found for scalapack")
 

@@ -196,7 +196,7 @@ class Cp2k(Package):
                     libs.append(wannier)
 
                 libs.extend(scalapack)
-                libs.extend(self.spec['mpi'].mpicxx_shared_libs)
+                libs.extend(self.spec['mpi:cxx'].libs)
                 libs.extend(self.compiler.stdcxx_libs)
             # LAPACK / BLAS
             lapack = spec['lapack'].libs
@@ -209,6 +209,8 @@ class Cp2k(Package):
             mkf.write('CPPFLAGS = {0}\n'.format(' '.join(cppflags)))
             mkf.write('FCFLAGS = {0}\n'.format(' '.join(fcflags)))
             mkf.write('LDFLAGS = {0}\n'.format(' '.join(ldflags)))
+            if '%intel' in spec:
+                mkf.write('LDFLAGS_C = {0}\n'.format(' '.join(ldflags) + ' -nofor_main'))
             mkf.write('LIBS = {0}\n'.format(' '.join(libs)))
 
         with working_dir('makefiles'):
