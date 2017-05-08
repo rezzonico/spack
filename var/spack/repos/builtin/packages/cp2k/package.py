@@ -88,24 +88,42 @@ class Cp2k(Package):
                 'intel': ['-O2',
                           '-pc64',
                           '-unroll',
-                          '-heap-arrays 64']
+                          '-xHost']
             }
+
+            dflags = ['-DNDEBUG']
+
             cppflags = [
                 '-D__FFTW3',
                 '-D__LIBINT',
                 spec['fftw'].headers.cpp_flags
             ]
+
+            if '^intel-mkl' in spec:
+                cppflags.append('-D__FFTSG')
+
+            cflags = copy.deepcopy(optflags[self.spec.compiler.name])
+            cxxflags = copy.deepcopy(optflags[self.spec.compiler.name])
             fcflags = copy.deepcopy(optflags[self.spec.compiler.name])
             fcflags.append(spec['fftw'].headers.cpp_flags)
+
+            if '%intel' in spec:
+                cflags.append('-fp-model precise')
+                cxxflags.append('-fp-model precise')
+                fcflags.extend(['-fp-model source', '-heap-arrays 64'])
+
             fftw = find_libraries('libfftw3', root=spec['fftw'].prefix.lib)
             ldflags = [fftw.search_flags]
+
             if 'superlu-dist@4.3' in spec:
                 ldflags = ['-Wl,--allow-multiple-definition'] + ldflags
+
             libs = [
                 join_path(spec['libint'].prefix.lib, 'libint.so'),
                 join_path(spec['libint'].prefix.lib, 'libderiv.so'),
                 join_path(spec['libint'].prefix.lib, 'libr12.so')
             ]
+
             if '+plumed' in self.spec:
                 # Include Plumed.inc in the Makefile
                 mkf.write('include {0}\n'.format(
@@ -116,6 +134,7 @@ class Cp2k(Package):
                               'Plumed.inc')
                 ))
                 # Add required macro
+                dflags.extend(['-D__PLUMED2'])
                 cppflags.extend(['-D__PLUMED2'])
                 libs.extend([
                     join_path(self.spec['plumed'].prefix.lib,
@@ -130,18 +149,20 @@ class Cp2k(Package):
                 # ${CPP} <file>.F > <file>.f90
                 #
                 # and use `-fpp` instead
-                mkf.write('CPP = # {0.compiler.cc} -P\n'.format(self))
-                mkf.write('AR = xiar -r\n')
+                mkf.write('CPP = # {0.compiler.cc} -P\n\n'.format(self))
+                mkf.write('AR = xiar -r\n\n')
             else:
-                mkf.write('CPP = {0.compiler.cc} -E\n'.format(self))
-                mkf.write('AR = ar -r\n')
+                mkf.write('CPP = {0.compiler.cc} -E\n\n'.format(self))
+                mkf.write('AR = ar -r\n\n')
             fc = self.compiler.fc if '~mpi' in spec else self.spec['mpi'].mpifc
             mkf.write('FC = {0}\n'.format(fc))
             mkf.write('LD = {0}\n'.format(fc))
             # Intel
             if '%intel' in self.spec:
                 cppflags.extend([
-                    '-D__INTEL_COMPILER',
+                    '-D__INTEL',
+                    '-D__HAS_ISO_C_BINDING',
+                    '-D__USE_CP2K_TRACE',
                     '-D__MKL'
                 ])
                 fcflags.extend([
@@ -205,13 +226,21 @@ class Cp2k(Package):
             ldflags.append((lapack + blas).search_flags)
             libs.extend([str(x) for x in (fftw, lapack, blas)])
 
+            dflags.extend(cppflags)
+            cflags.extend(cppflags)
+            cxxflags.extend(cppflags)
+            fcflags.extend(cppflags)
+ 
             # Write compiler flags to file
-            mkf.write('CPPFLAGS = {0}\n'.format(' '.join(cppflags)))
-            mkf.write('FCFLAGS = {0}\n'.format(' '.join(fcflags)))
-            mkf.write('LDFLAGS = {0}\n'.format(' '.join(ldflags)))
+            mkf.write('DFLAGS = {0}\n\n'.format(' '.join(dflags)))
+            mkf.write('CPPFLAGS = {0}\n\n'.format(' '.join(cppflags)))
+            mkf.write('CFLAGS = {0}\n\n'.format(' '.join(cflags)))
+            mkf.write('CXXFLAGS = {0}\n\n'.format(' '.join(cxxflags)))
+            mkf.write('FCFLAGS = {0}\n\n'.format(' '.join(fcflags)))
+            mkf.write('LDFLAGS = {0}\n\n'.format(' '.join(ldflags)))
             if '%intel' in spec:
-                mkf.write('LDFLAGS_C = {0}\n'.format(' '.join(ldflags) + ' -nofor_main'))
-            mkf.write('LIBS = {0}\n'.format(' '.join(libs)))
+                mkf.write('LDFLAGS_C = {0}\n\n'.format(' '.join(ldflags) + ' -nofor_main'))
+            mkf.write('LIBS = {0}\n\n'.format(' '.join(libs)))
 
         with working_dir('makefiles'):
             # Apparently the Makefile bases its paths on PWD
