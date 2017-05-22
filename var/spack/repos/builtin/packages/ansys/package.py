@@ -30,7 +30,7 @@ class Ansys(Package):
         run_env.prepend_path('PATH', '/ssoft/spack/external/ansys/17.1/v171/polyflow/bin')  # noqa: E501
         run_env.prepend_path('PATH', '/ssoft/spack/external/ansys/17.1/v171/tgrid/bin')  # noqa: E501
         run_env.prepend_path('PATH', '/ssoft/spack/external/ansys/17.1/v171/Framework/bin/Linux64')  # noqa: E501
-        run_env.prepend_path('PATH', '/ssoft/spack/external/ansys/17.1/v171/icemcfd/linux64_amd/bin/icemcfd')  # noqa: E501
+        run_env.prepend_path('PATH', '/ssoft/spack/external/ansys/17.1/v171/icemcfd/linux64_amd/bin')  # noqa: E501
 
         run_env.prepend_path('LD_LIBRARY_PATH', '/ssoft/spack/external/ansys/17.1/v171/Framework/bin/Linux64')  # noqa: E501
         run_env.prepend_path('LD_LIBRARY_PATH', '/ssoft/spack/external/ansys/17.1/v171/polyflow/polyflow17.1.0/lnamd64/libs')  # noqa: E501
