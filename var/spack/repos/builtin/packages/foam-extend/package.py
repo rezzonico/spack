@@ -25,6 +25,7 @@ class FoamExtend(Package):
 
     supported_compilers = {'clang': 'Clang', 'gcc': 'Gcc', 'intel': 'Icc'}
 
+    depends_on('binutils')
     depends_on('mpi')
     depends_on('python')
     #depends_on('flex@:2.5.99')
@@ -106,38 +107,20 @@ class FoamExtend(Package):
             'ZLIB_DIR': self.spec['zlib'].prefix,
         }
 
-        if '+scotch' in self.spec or '+ptscotch' in self.spec:
-            prefs_dict['SCOTCH_SYSTEM'] = 1
-            prefs_dict['SCOTCH_DIR'] = self.spec['scotch'].prefix
-            prefs_dict['SCOTCH_BIN_DIR'] = self.spec['scotch'].prefix.bin
-            prefs_dict['SCOTCH_LIB_DIR'] = self.spec['scotch'].prefix.lib
-            prefs_dict['SCOTCH_INCLUDE_DIR'] = \
-                self.spec['scotch'].prefix.include
+        deps_rename = {'ptscotch': 'scotch'}
 
-        if '+metis' in self.spec:
-            prefs_dict['METIS_SYSTEM'] = 1
-            prefs_dict['METIS_DIR'] = self.spec['metis'].prefix
-            prefs_dict['METIS_BIN_DIR'] = self.spec['metis'].prefix.bin
-            prefs_dict['METIS_LIB_DIR'] = self.spec['metis'].prefix.lib
-            prefs_dict['METIS_INCLUDE_DIR'] = self.spec['metis'].prefix.include
-
-        if '+parmetis' in self.spec:
-            prefs_dict['PARMETIS_SYSTEM'] = 1
-            prefs_dict['PARMETIS_DIR'] = self.spec['parmetis'].prefix
-            prefs_dict['PARMETIS_BIN_DIR'] = self.spec['parmetis'].prefix.bin
-            prefs_dict['PARMETIS_LIB_DIR'] = self.spec['parmetis'].prefix.lib
-            prefs_dict['PARMETIS_INCLUDE_DIR'] = \
-                self.spec['parmetis'].prefix.include
-
-        if '+parmgridgen' in self.spec:
-            prefs_dict['PARMGRIDGEN_SYSTEM'] = 1
-            prefs_dict['PARMGRIDGEN_DIR'] = self.spec['parmgridgen'].prefix
-            prefs_dict['PARMGRIDGEN_BIN_DIR'] = \
-                self.spec['parmgridgen'].prefix.bin
-            prefs_dict['PARMGRIDGEN_LIB_DIR'] = \
-                self.spec['parmgridgen'].prefix.lib
-            prefs_dict['PARMGRIDGEN_INCLUDE_DIR'] = \
-                self.spec['parmgridgen'].prefix.include
+        for dep in ['scotch', 'ptscotch', 'metis', 'parmetis', 'parmgridgen']:
+            if '+{0}'.format(dep) in self.spec:
+                dep_name = dep if dep not in deps_rename else deps_rename[dep]
+                prefs_dict['{0}_SYSTEM'.format(dep_name.upper())] = 1
+                prefs_dict['{0}_DIR'.format(dep_name.upper())] \
+                    = self.spec[dep_name].prefix
+                prefs_dict['{0}_BIN_DIR'.format(dep_name.upper())] \
+                    = self.spec[dep_name].prefix.bin
+                prefs_dict['{0}_LIB_DIR'.format(dep_name.upper())] \
+                    = self.spec[dep_name].prefix.lib
+                prefs_dict['{0}_INCLUDE_DIR'.format(dep_name.upper())] \
+                    = self.spec[dep_name].prefix.include
 
         if '+paraview' in self.spec:
             prefs_dict['PARAVIEW_SYSTEM'] = 1
