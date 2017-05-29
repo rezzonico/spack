@@ -36,7 +36,8 @@ class Parmgridgen(Package):
     homepage = "http://www-users.cs.umn.edu/~moulitsa/software.html"
     url = "http://www-users.cs.umn.edu/~moulitsa/download/ParMGridGen-1.0.tar.gz"
 
-    version('1.0', '2872fa95b7fb91d6bd525490eed62038')
+    # the master is 2 years old and the tags do not correspond to the 1.0
+    version('1.0', git='https://github.com/mrklein/ParMGridGen.git')
 
     depends_on('mpi')
 
