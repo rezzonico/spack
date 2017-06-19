@@ -25,7 +25,7 @@
 from spack import *
 
 
-class Mpich(AutotoolsPackage, mixins.FilterCompilerWrappers):
+class Mpich(AutotoolsPackage):
     """MPICH is a high performance and widely portable implementation of
     the Message Passing Interface (MPI) standard."""
 
@@ -50,6 +50,8 @@ class Mpich(AutotoolsPackage, mixins.FilterCompilerWrappers):
     provides('mpi')
     provides('mpi@:3.0', when='@3:')
     provides('mpi@:1.3', when='@1:')
+
+    filter_compiler_wrappers('mpicc', 'mpicxx', 'mpif77', 'mpif90')
 
     def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
         # On Cray, the regular compiler wrappers *are* the MPI wrappers.
@@ -105,13 +107,4 @@ class Mpich(AutotoolsPackage, mixins.FilterCompilerWrappers):
             '--with-pmi={0}'.format('yes' if '+pmi' in spec else 'no'),
             '--{0}-romio'.format('enable' if '+romio' in spec else 'disable'),
             '--{0}-ibverbs'.format('with' if '+verbs' in spec else 'without')
-        ]
-
-    @property
-    def to_be_filtered_for_wrappers(self):
-        return [
-            join_path(self.prefix.bin, 'mpicc'),
-            join_path(self.prefix.bin, 'mpicxx'),
-            join_path(self.prefix.bin, 'mpif77'),
-            join_path(self.prefix.bin, 'mpif90')
         ]

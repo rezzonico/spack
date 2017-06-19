@@ -27,7 +27,7 @@ import shutil
 from spack import *
 
 
-class Hdf5(AutotoolsPackage, mixins.FilterCompilerWrappers):
+class Hdf5(AutotoolsPackage):
     """HDF5 is a data model, library, and file format for storing and managing
     data. It supports an unlimited variety of datatypes, and is designed for
     flexible and efficient I/O and for high volume and complex data.
@@ -74,6 +74,8 @@ class Hdf5(AutotoolsPackage, mixins.FilterCompilerWrappers):
     # (taken from hdf5@1.10.0patch1)
     conflicts('+threadsafe', when='+cxx')
     conflicts('+threadsafe', when='+fortran')
+
+    filter_compiler_wrappers('h5cc', 'h5c++', 'h5fc')
 
     def url_for_version(self, version):
         url = "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-{0}/hdf5-{1}/src/hdf5-{1}.tar.gz"
@@ -281,11 +283,3 @@ HDF5 version {version} {version}
                 print('-' * 80)
                 raise RuntimeError("HDF5 install check failed")
         shutil.rmtree(checkdir)
-
-    @property
-    def to_be_filtered_for_wrappers(self):
-        return [
-            join_path(self.prefix.bin, 'h5c++'),
-            join_path(self.prefix.bin, 'h5cc'),
-            join_path(self.prefix.bin, 'h5fc'),
-        ]

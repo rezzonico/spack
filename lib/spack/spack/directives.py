@@ -69,7 +69,7 @@ from spack.version import Version
 __all__ = []
 
 
-class DirectiveMetaMixin(type):
+class DirectiveMeta(type):
     """Flushes the directives that were temporarily stored in the staging
     area into the package.
     """
@@ -104,13 +104,13 @@ class DirectiveMetaMixin(type):
 
         # Move things to be executed from module scope (where they
         # are collected first) to class scope
-        if DirectiveMetaMixin._directives_to_be_executed:
+        if DirectiveMeta._directives_to_be_executed:
             attr_dict['_directives_to_be_executed'].extend(
-                DirectiveMetaMixin._directives_to_be_executed
+                DirectiveMeta._directives_to_be_executed
             )
-            DirectiveMetaMixin._directives_to_be_executed = []
+            DirectiveMeta._directives_to_be_executed = []
 
-        return super(DirectiveMetaMixin, mcs).__new__(
+        return super(DirectiveMeta, mcs).__new__(
             mcs, name, bases, attr_dict
         )
 
@@ -125,13 +125,13 @@ class DirectiveMetaMixin(type):
             setattr(cls, 'name', pkg_name)
             # Ensure the presence of the dictionaries associated
             # with the directives
-            for d in DirectiveMetaMixin._directive_names:
+            for d in DirectiveMeta._directive_names:
                 setattr(cls, d, {})
             # Lazy execution of directives
             for command in cls._directives_to_be_executed:
                 command(cls)
 
-        super(DirectiveMetaMixin, cls).__init__(name, bases, attr_dict)
+        super(DirectiveMeta, cls).__init__(name, bases, attr_dict)
 
     @staticmethod
     def directive(dicts=None):
@@ -181,7 +181,7 @@ class DirectiveMetaMixin(type):
             message = "dicts arg must be list, tuple, or string. Found {0}"
             raise TypeError(message.format(type(dicts)))
         # Add the dictionary names if not already there
-        DirectiveMetaMixin._directive_names |= set(dicts)
+        DirectiveMeta._directive_names |= set(dicts)
 
         # This decorator just returns the directive functions
         def _decorator(decorated_function):
@@ -197,13 +197,13 @@ class DirectiveMetaMixin(type):
                 if not isinstance(values, collections.Sequence):
                     values = (values, )
 
-                DirectiveMetaMixin._directives_to_be_executed.extend(values)
+                DirectiveMeta._directives_to_be_executed.extend(values)
             return _wrapper
 
         return _decorator
 
 
-directive = DirectiveMetaMixin.directive
+directive = DirectiveMeta.directive
 
 
 @directive('versions')

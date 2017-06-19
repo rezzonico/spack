@@ -28,7 +28,7 @@ from spack.util.environment import *
 import shutil
 
 
-class R(AutotoolsPackage, mixins.FilterCompilerWrappers):
+class R(AutotoolsPackage):
     """R is 'GNU S', a freely available language and environment for
     statistical computing and graphics which provides a wide variety of
     statistical and graphical techniques: linear and nonlinear modelling,
@@ -88,6 +88,8 @@ class R(AutotoolsPackage, mixins.FilterCompilerWrappers):
 
     patch('zlib.patch', when='@:3.3.2')
 
+    filter_compiler_wrappers('Makeconf')
+
     @property
     def etcdir(self):
         return join_path(prefix, 'rlib', 'R', 'etc')
@@ -123,10 +125,6 @@ class R(AutotoolsPackage, mixins.FilterCompilerWrappers):
         src_makeconf = join_path(self.etcdir, 'Makeconf')
         dst_makeconf = join_path(self.etcdir, 'Makeconf.spack')
         shutil.copy(src_makeconf, dst_makeconf)
-
-    @property
-    def to_be_filtered_for_wrappers(self):
-        return [join_path(self.etcdir, 'Makeconf')]
 
     # ========================================================================
     # Set up environment to make install easy for R extensions.
