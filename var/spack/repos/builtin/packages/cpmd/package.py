@@ -53,8 +53,12 @@ class Cpmd(Package):
                         % architecture)
         elif '%gcc' in self.spec:
             architecture = 'LINUX-I686-FEDORA-MPI-FFTW'
+            # by default CPMD use FFTW when compiled with gnu
+            # It's better FFTW3
             filter_file('(CPPFLAGS=)(\')(.+)(\')', r'\1\2\3%s\4' %
                         ' -D__HAS_FFT_FFTW3', 'configure/%s' % architecture)
+            # the option -ffree-line-length-none is necessary to avoid
+            # errors occurring when a line is too long
             filter_file('(FFLAGS=)(\')(.+)(\')', r'\1\2\3%s\4' %
                         ' -ffree-line-length-none', 'configure/%s' %
                         architecture)
