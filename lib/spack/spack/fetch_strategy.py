@@ -40,26 +40,25 @@ in order to build it.  They need to define the following methods:
     * archive()
         Archive a source directory, e.g. for creating a mirror.
 """
+import copy
 import os
-import sys
 import re
 import shutil
-import copy
+import sys
 from functools import wraps
-from six import string_types
-from six import with_metaclass
 
 import llnl.util.tty as tty
-from llnl.util.filesystem import *
 import spack
 import spack.error
 import spack.util.crypto as crypto
+import spack.util.pattern as pattern
+from llnl.util.filesystem import *
+from six import string_types
+from spack.util.compression import decompressor_for, extension
 from spack.util.executable import *
 from spack.util.string import *
 from spack.version import Version, ver
-from spack.util.compression import decompressor_for, extension
 
-import spack.util.pattern as pattern
 """List of all fetch strategies, created by FetchStrategy metaclass."""
 all_strategies = []
 
@@ -77,17 +76,14 @@ def _needs_stage(fun):
     return wrapper
 
 
-class FSMeta(type):
-    """This metaclass registers all fetch strategies in a list."""
-    def __init__(cls, name, bases, dict):
-        type.__init__(cls, name, bases, dict)
-        if cls.enabled:
-            all_strategies.append(cls)
+def register_fetch_strategy(cls):
+    """Decorator that registers fetch strategies in a global list"""
+    all_strategies.append(cls)
+    return cls
 
 
-class FetchStrategy(with_metaclass(FSMeta, object)):
+class FetchStrategy(object):
     """Superclass of all fetch strategies."""
-    enabled = False  # Non-abstract subclasses should be enabled.
     required_attributes = None  # Attributes required in version() args.
 
     def __init__(self):
@@ -95,6 +91,7 @@ class FetchStrategy(with_metaclass(FSMeta, object)):
         # constructed at package construction time.  This is where things
         # will be fetched.
         self.stage = None
+        super(FetchStrategy, self).__init__()
 
     def set_stage(self, stage):
         """This is called by Stage before any of the fetching
@@ -152,7 +149,6 @@ class FetchStrategy(with_metaclass(FSMeta, object)):
 
 @pattern.composite(interface=FetchStrategy)
 class FetchStrategyComposite(object):
-
     """
     Composite for a FetchStrategy object. Implements the GoF composite pattern.
     """
@@ -160,12 +156,12 @@ class FetchStrategyComposite(object):
     set_stage = FetchStrategy.set_stage
 
 
+@register_fetch_strategy
 class URLFetchStrategy(FetchStrategy):
 
     """FetchStrategy that pulls source code from a URL for an archive,
        checks the archive against a checksum,and decompresses the archive.
     """
-    enabled = True
     required_attributes = ['url']
 
     def __init__(self, url=None, digest=None, **kwargs):
@@ -401,6 +397,7 @@ class URLFetchStrategy(FetchStrategy):
             return "[no url]"
 
 
+@register_fetch_strategy
 class CacheURLFetchStrategy(URLFetchStrategy):
     """The resource associated with a cache URL may be out of date."""
 
@@ -493,6 +490,7 @@ class VCSFetchStrategy(FetchStrategy):
         return "%s<%s>" % (self.__class__, self.url)
 
 
+@register_fetch_strategy
 class GoFetchStrategy(VCSFetchStrategy):
 
     """
@@ -504,7 +502,6 @@ class GoFetchStrategy(VCSFetchStrategy):
 
     Go get does not natively support versions, they can be faked with git
     """
-    enabled = True
     required_attributes = ('go', )
 
     def __init__(self, **kwargs):
@@ -553,6 +550,7 @@ class GoFetchStrategy(VCSFetchStrategy):
         return "[go] %s" % self.url
 
 
+@register_fetch_strategy
 class GitFetchStrategy(VCSFetchStrategy):
 
     """
@@ -571,7 +569,6 @@ class GitFetchStrategy(VCSFetchStrategy):
         * ``tag``: Particular tag to check out
         * ``commit``: Particular commit hash in the repo
     """
-    enabled = True
     required_attributes = ('git', )
 
     def __init__(self, **kwargs):
@@ -709,6 +706,7 @@ class GitFetchStrategy(VCSFetchStrategy):
         return "[git] %s" % self.url
 
 
+@register_fetch_strategy
 class SvnFetchStrategy(VCSFetchStrategy):
 
     """Fetch strategy that gets source code from a subversion repository.
@@ -721,7 +719,6 @@ class SvnFetchStrategy(VCSFetchStrategy):
            version('name', svn='http://www.example.com/svn/trunk',
                    revision='1641')
     """
-    enabled = True
     required_attributes = ['svn']
 
     def __init__(self, **kwargs):
@@ -790,6 +787,7 @@ class SvnFetchStrategy(VCSFetchStrategy):
         return "[svn] %s" % self.url
 
 
+@register_fetch_strategy
 class HgFetchStrategy(VCSFetchStrategy):
 
     """
@@ -810,7 +808,6 @@ class HgFetchStrategy(VCSFetchStrategy):
 
         * ``revision``: Particular revision, branch, or tag.
     """
-    enabled = True
     required_attributes = ['hg']
 
     def __init__(self, **kwargs):
