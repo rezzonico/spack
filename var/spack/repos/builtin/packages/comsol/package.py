@@ -22,27 +22,21 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
+
 from spack import *
 
 
-class Qhull(CMakePackage):
-    """Qhull computes the convex hull, Delaunay triangulation, Voronoi
-       diagram, halfspace intersection about a point, furt hest-site
-       Delaunay triangulation, and furthest-site Voronoi diagram. The
-       source code runs in 2-d, 3-d, 4-d, and higher dimensions. Qhull
-       implements the Quickhull algorithm for computing the convex
-       hull. It handles roundoff errors from floating point
-       arithmetic. It computes volumes, surface areas, and
-       approximations to the convex hull."""
+class Comsol(Package):
+    """Comsol Multiphysics is a general-purpose software platform
+    for modeling and simulating physics-based problems.
+    """
 
-    homepage = "http://www.qhull.org"
+    homepage = "http://www.comsol.com"
+    url = 'fakeurl.tar.gz'
+    licensed = True
+    only_binary = True
 
-    version('2015.2', 'e6270733a826a6a7c32b796e005ec3dc',
-            url="http://www.qhull.org/download/qhull-2015-src-7.2.0.tgz")
+    version('5.2a')
 
-    version('2012.1', 'd0f978c0d8dfb2e919caefa56ea2953c',
-            url="http://www.qhull.org/download/qhull-2012.1-src.tgz")
-
-    patch('qhull-unused-intel-17.02.patch', when='@2015.2')
-
-    depends_on('cmake@2.6:', type='build')
+    def install(self, spec, prefix):
+        pass

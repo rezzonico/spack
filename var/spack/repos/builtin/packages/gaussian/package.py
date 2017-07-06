@@ -22,27 +22,44 @@
 # License along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##############################################################################
+
 from spack import *
 
+import distutils.dir_util
 
-class Qhull(CMakePackage):
-    """Qhull computes the convex hull, Delaunay triangulation, Voronoi
-       diagram, halfspace intersection about a point, furt hest-site
-       Delaunay triangulation, and furthest-site Voronoi diagram. The
-       source code runs in 2-d, 3-d, 4-d, and higher dimensions. Qhull
-       implements the Quickhull algorithm for computing the convex
-       hull. It handles roundoff errors from floating point
-       arithmetic. It computes volumes, surface areas, and
-       approximations to the convex hull."""
 
-    homepage = "http://www.qhull.org"
+class Gaussian(Package):
+    """Gaussian is a licensed software without a short description
+    in the homepage.
+    """
 
-    version('2015.2', 'e6270733a826a6a7c32b796e005ec3dc',
-            url="http://www.qhull.org/download/qhull-2015-src-7.2.0.tgz")
+    homepage = "http://www.gaussian.com"
 
-    version('2012.1', 'd0f978c0d8dfb2e919caefa56ea2953c',
-            url="http://www.qhull.org/download/qhull-2012.1-src.tgz")
+    version(
+        'g09-D.01',
+        '8730898096867217fef086386f643b4c',
+        url="file:///home/ddossant/software/gaussian/g09-D.01.tar.gz"
+    )
 
-    patch('qhull-unused-intel-17.02.patch', when='@2015.2')
+    def install(self, spec, prefix):
+        distutils.dir_util.copy_tree(".", prefix + '/g09')
 
-    depends_on('cmake@2.6:', type='build')
+    def setup_environment(self, spack_env, run_env):
+
+        prefix = self.prefix
+        g09_dir = join_path(prefix, 'g09')
+
+        run_env.set('g09root', self.prefix)
+
+        exec_dirs = [
+            g09_dir,
+            join_path(g09_dir, 'bsd'),
+            join_path(g09_dir, 'local')
+        ]
+
+        run_env.set('GAUSS_EXEDIR', ':'.join(exec_dirs))
+        run_env.set('GAUSS_LEXEDIR', join_path(g09_dir, 'linda-exe'))
+        run_env.set('GAUSS_ARCHDIR', join_path(g09_dir, 'arch'))
+        run_env.set('GAUSS_BSDDIR', join_path(g09_dir, 'bsd'))
+        run_env.prepend_path('PATH', ':'.join(exec_dirs))
+        run_env.prepend_path('LD_LIBRARY_PATH', ':'.join(exec_dirs))

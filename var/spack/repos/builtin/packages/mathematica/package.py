@@ -25,24 +25,24 @@
 from spack import *
 
 
-class Qhull(CMakePackage):
-    """Qhull computes the convex hull, Delaunay triangulation, Voronoi
-       diagram, halfspace intersection about a point, furt hest-site
-       Delaunay triangulation, and furthest-site Voronoi diagram. The
-       source code runs in 2-d, 3-d, 4-d, and higher dimensions. Qhull
-       implements the Quickhull algorithm for computing the convex
-       hull. It handles roundoff errors from floating point
-       arithmetic. It computes volumes, surface areas, and
-       approximations to the convex hull."""
+class Mathematica(Package):
+    """Mathematica is a symbolic mathematics program.
 
-    homepage = "http://www.qhull.org"
+    There are a number of ways to use it:
 
-    version('2015.2', 'e6270733a826a6a7c32b796e005ec3dc',
-            url="http://www.qhull.org/download/qhull-2015-src-7.2.0.tgz")
+    mathematica - the GUI based interface
+    math        - the command line interace
+    mcc         - the MathLink Template Compiler
 
-    version('2012.1', 'd0f978c0d8dfb2e919caefa56ea2953c',
-            url="http://www.qhull.org/download/qhull-2012.1-src.tgz")
+    See https://reference.wolfram.com/language/tutorial/WolframLanguageScripts.html for how to use it in batch mode
+    """
 
-    patch('qhull-unused-intel-17.02.patch', when='@2015.2')
+    homepage = "https://www.wolfram.com/mathematica/"
+    url = 'fakeurl.tar.gz'
+    licensed = True
+    only_binary = True
 
-    depends_on('cmake@2.6:', type='build')
+    version('9.0.1')
+
+    def install(self, spec, prefix):
+        pass
