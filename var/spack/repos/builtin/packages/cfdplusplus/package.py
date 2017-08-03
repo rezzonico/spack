@@ -61,4 +61,3 @@ class Cfdplusplus(Package):
         run_env.set('TCL_LIBRARY', '/ssoft/spack/external/CFD++/2016.05/mlib/tcltk8/lib/tcl8.0')  # noqa: E501
         run_env.set('TK_LIBRARY', '/ssoft/spack/external/CFD++/2016.05/mlib/tcltk8/lib/tk8.0')  # noqa: E501
         run_env.set('MPATH', '/ssoft/spack/external/CFD++/2016.05/mbin')  # noqa: E501
-
