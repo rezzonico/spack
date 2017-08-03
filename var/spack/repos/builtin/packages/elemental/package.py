@@ -97,7 +97,7 @@ class Elemental(CMakePackage):
     def libs(self):
         shared = True if '+shared' in self.spec else False
         return find_libraries(
-            'libEl', root=self.prefix, shared=shared, recurse=True
+            'libEl', root=self.prefix, shared=shared, recursive=True
         )
 
     def cmake_args(self):

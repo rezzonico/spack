@@ -52,8 +52,14 @@ class Armadillo(CMakePackage):
 
         arpack = find_libraries('libarpack', root=spec[
                                 'arpack-ng'].prefix.lib, shared=True)
-        superlu = find_libraries('libsuperlu', root=spec[
-                                 'superlu'].prefix, shared=False, recurse=True)
+
+        superlu = find_libraries(
+            'libsuperlu',
+            root=spec['superlu'].prefix,
+            shared=False,
+            recursive=True
+        )
+
         return [
             # ARPACK support
             '-DARPACK_LIBRARY={0}'.format(arpack.joined()),
