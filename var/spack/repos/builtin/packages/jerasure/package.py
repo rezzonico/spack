@@ -26,7 +26,7 @@
 from spack import *
 
 
-class Jerasure(Package):
+class Jerasure(AutotoolsPackage):
     """A library in C that supports erasure coding in storage applications,"""
 
     homepage = "http://jerasure.org/"
@@ -34,16 +34,8 @@ class Jerasure(Package):
 
     version('develop', git='http://lab.jerasure.org/jerasure/jerasure.git')
 
-    depends_on('autoconf')
-    depends_on('libtool')
-    depends_on('gfcomplete')
-
-    def install(self, spec, prefix):
-        Executable('libtoolize')()
-        Executable('autoreconf --force --install')()
-        args = ["--prefix=%s" % prefix,
-                "CFLAGS=-I%s" % spec['gfcomplete'].prefix.include,
-                "LDFLAGS=-L%s" % spec['gfcomplete'].prefix.lib]
-        configure(*args)
-        make()
-        make('install')
+    depends_on('autoconf', type='build')
+    depends_on('automake', type='build')
+    depends_on('libtool',  type='build')
+    depends_on('m4',       type='build')
+    depends_on('gf-complete')

@@ -26,7 +26,7 @@
 from spack import *
 
 
-class GfComplete(Package):
+class GfComplete(AutotoolsPackage):
     """A Comprehensive Open Source Library for Galois Field Arithmetic"""
 
     homepage = "http://jerasure.org/gf-complete-1.02"
@@ -34,14 +34,6 @@ class GfComplete(Package):
 
     version('develop', git='http://lab.jerasure.org/jerasure/gf-complete.git')
 
-    depends_on('libtool')
-    depends_on('autoconf')
-    provides('gfcomplete')
-
-    def install(self, spec, prefix):
+    def autoreconf(self, spec, prefix):
         Executable('libtoolize')()
         Executable('./autogen.sh')()
-        args = ["--prefix=%s" % prefix]
-        configure(*args)
-        make()
-        make('install')
