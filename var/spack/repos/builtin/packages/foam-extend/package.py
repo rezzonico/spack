@@ -25,7 +25,7 @@ class FoamExtend(Package):
 
     supported_compilers = {'clang': 'Clang', 'gcc': 'Gcc', 'intel': 'Icc'}
 
-    depends_on('binutils')
+    depends_on('binutils', when='%gcc')
     depends_on('mpi')
     depends_on('python')
     #depends_on('flex@:2.5.99')
