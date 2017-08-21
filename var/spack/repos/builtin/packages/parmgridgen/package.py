@@ -67,5 +67,5 @@ class Parmgridgen(Package):
         install("libmgrid.a", prefix.lib)
         install("libparmgrid.a", prefix.lib)
 
-        install("mgridgen", prefix.bin)
-        install("parmgridgen", prefix.bin)
+        install("bin/mgridgen", prefix.bin)
+        install("bin/parmgridgen", prefix.bin)
