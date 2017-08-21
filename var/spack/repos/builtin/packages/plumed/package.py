@@ -58,6 +58,8 @@ class Plumed(Package):
 
     depends_on('autoconf')
 
+    depends_on('binutils', when='%gcc')
+
     # Dictionary mapping PLUMED versions to the patches it provides
     # interactively
     plumed_patches = {
