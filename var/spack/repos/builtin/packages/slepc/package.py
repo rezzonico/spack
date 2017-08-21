@@ -34,7 +34,7 @@ class Slepc(Package):
     homepage = "http://www.grycap.upv.es/slepc"
     url = "http://slepc.upv.es/download/download.php?filename=slepc-3.6.2.tar.gz"
 
-    version('3.6.2', '2ab4311bed26ccf7771818665991b2ea3a9b15f97e29fd13911ab1293e8e65df')
+    version('3.6.2', '1cbb3de5673d5f2325b5a986b029ff12d9dc96c9659fe5ab11a444f0ee44878f')
 
     variant('arpack', default=False, description='Enables Arpack wrappers')
 
