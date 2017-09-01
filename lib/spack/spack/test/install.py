@@ -161,13 +161,13 @@ def test_second_install_no_overwrite_first(install_mockery, mock_fetch):
 
 
 def test_store(install_mockery, mock_fetch):
-    spec = Spec('cmake-client').concretized()
+    spec = spack.spec.concretized(Spec('cmake-client'))
     pkg = spec.package
     pkg.do_install()
 
 
 def test_failing_build(install_mockery, mock_fetch):
-    spec = Spec('failing-build').concretized()
+    spec = spack.spec.concretized(Spec('failing-build'))
     pkg = spec.package
     with pytest.raises(spack.build_environment.ChildError):
         pkg.do_install()

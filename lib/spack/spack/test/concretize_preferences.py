@@ -48,7 +48,7 @@ def concretize_scope(config, tmpdir):
 
 
 def concretize(abstract_spec):
-    return Spec(abstract_spec).concretized()
+    return spack.spec.concretized(Spec(abstract_spec))
 
 
 def update_packages(pkgname, section, value):

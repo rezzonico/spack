@@ -137,6 +137,7 @@ __all__ = [
     'Spec',
     'alldeps',
     'canonical_deptype',
+    'concretized',
     'parse',
     'parse_anonymous_spec',
     'SpecError',
@@ -1928,14 +1929,6 @@ class Spec(object):
             s._normal = value
             s._concrete = value
 
-    def concretized(self):
-        """This is a non-destructive version of concretize().  First clones,
-           then returns a concrete version of this package without modifying
-           this package. """
-        clone = self.copy()
-        clone.concretize()
-        return clone
-
     def flat_dependencies(self, **kwargs):
         """Return a DependencyMap containing all of this spec's
            dependencies with their constraints merged.
@@ -3079,6 +3072,20 @@ class LazySpecCache(collections.defaultdict):
         value = self.default_factory(key)
         self[key] = value
         return value
+
+
+def concretized(spec):
+    """Returns a concretized copy of the argument spec
+
+    Args:
+        spec (Spec): spec to be copied and concretized
+
+    Returns:
+        concretized copy of ``spec``
+    """
+    clone = spec.copy()
+    clone.concretize()
+    return clone
 
 
 #
