@@ -78,14 +78,14 @@ def spec(parser, args):
         # Print some diagnostic info by default.
         print("Input spec")
         print("--------------------------------")
-        print(spec.tree(**kwargs))
+        print(spack.spec.tree(spec, **kwargs))
 
         print("Normalized")
         print("--------------------------------")
         spec.normalize()
-        print(spec.tree(**kwargs))
+        print(spack.spec.tree(spec, **kwargs))
 
         print("Concretized")
         print("--------------------------------")
         spec.concretize()
-        print(spec.tree(**kwargs))
+        print(spack.spec.tree(spec, **kwargs))
