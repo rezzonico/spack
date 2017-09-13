@@ -14,6 +14,7 @@ class Tensorflow(Package):
     depends_on('python')
     depends_on('cuda')
     depends_on('cudnn')
+    depends_on('mpi')
 
     def install(self, spec, prefix):
         pass
