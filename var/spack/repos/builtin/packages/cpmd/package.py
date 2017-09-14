@@ -35,7 +35,9 @@ class Cpmd(Package):
     url      = "cpmd-v4.1.tar.gz"
 
     version('v4.1', 'f70aedefa2e5f8a5f8d79afdd99d0895')
+    
     variant('openmp', default=False, description='Enables openMP support')
+    
     depends_on('mpi')
     depends_on('blas')
     depends_on('lapack')
