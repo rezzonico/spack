@@ -41,21 +41,29 @@ from spack import *
 
 
 class Maple(Package):
-    """Maple: this software makes it possible to work on numerical quantities (integer, real, complex) as well as with polynomials, functions, series. Maple can derive, integrate and solve linear equation systems. It can invert matrices and perform asymptotic expansions and resolutions of differential equations in symbolic form. The Maple system also offers numerous functions in numerical arithmetic and in combinatorics. Maple is an interpreted language."""
+    """Maple: this software makes it possible to work on numerical quantities
+(integer, real, complex) as well as with polynomials, functions, series.
+
+Maple can derive, integrate and solve linear equation systems. It can invert
+matrices and perform asymptotic expansions and resolutions of differential
+equations in symbolic form. The Maple system also offers numerous functions
+in numerical arithmetic and in combinatorics.
+
+Maple is an interpreted language."""
 
     homepage = "https://www.maplesoft.com/products/Maple/"
     url      = "fakeurl.tar.gz"
 
     version('2017')
+
     def install(self, spec, prefix):
         pass
 
     def setup_environment(self, spack_env, run_env):
         run_env.prepend_path('PATH', '/ssoft/spack/external/Maple/2017/bin')
-        run_env.prepend_path('LD_LIBRARY_PATH', '/ssoft/spack/external/Maple/2017/lib')
+        run_env.prepend_path('LD_LIBRARY_PATH',
+                             '/ssoft/spack/external/Maple/2017/lib')
         run_env.prepend_path('MANPATH', '/ssoft/spack/external/Maple/2017/man')
 
     def setup_dependent_environment(self, spack_env, run_env, dependent_spec):
         pass
-
-
