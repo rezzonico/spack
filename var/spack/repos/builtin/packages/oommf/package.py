@@ -46,14 +46,14 @@ class Oommf(Package):
     version('2.0a0_20170929', '4317ed01ee277b32d73e36a4fc151d8d')
 
     def install(self, spec, prefix):
-	distclean = Executable("./oommf.tcl pimake distclean")
-	distclean()
-	upgrade = Executable("./oommf.tcl pimake upgrade")
-	upgrade()
-	pimake = Executable("./oommf.tcl pimake")
-	pimake()
-	mkdirp(prefix.bin)
-	copy_tree(".", prefix.bin)
+        distclean = Executable("./oommf.tcl pimake distclean")
+        distclean()
+        upgrade = Executable("./oommf.tcl pimake upgrade")
+        upgrade()
+        pimake = Executable("./oommf.tcl pimake")
+        pimake()
+        mkdirp(prefix.bin)
+        copy_tree(".", prefix.bin)
 
     def setup_environment(self, spack_env, run_env):
         run_env.prepend_path('PATH', self.spec.prefix)
