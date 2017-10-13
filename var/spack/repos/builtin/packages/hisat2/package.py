@@ -40,10 +40,10 @@ class Hisat2(MakefilePackage):
 
     def install(self, spec, prefix):
         install_tree('doc', prefix.doc)
-        install_tree('example', prefix.example)
-        install_tree('hisatgenotype_modules', prefix.hisatgenotype_modules)
-        install_tree('hisatgenotype_scripts', prefix.hisatgenotype_scripts)
-        install_tree('scripts', prefix.scripts)
+        # install_tree('example', prefix.example)
+        # install_tree('hisatgenotype_modules', prefix.hisatgenotype_modules)
+        # install_tree('hisatgenotype_scripts', prefix.hisatgenotype_scripts)
+        # install_tree('scripts', prefix.scripts)
         mkdirp(prefix.bin)
         install('hisat2', prefix.bin)
         install('hisat2-align-s', prefix.bin)
